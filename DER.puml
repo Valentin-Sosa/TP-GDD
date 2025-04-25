@@ -1,0 +1,165 @@
+@startuml
+
+skinparam linetype ortho
+
+entity "Pedido" as Ped {
+  *Pedido_Numero : number <<PK>>
+  --
+  *Pedido_Fecha: datetime 
+  *Pedido_Estado: char(255)
+  *Pedido_Total: number
+  *Pedido_Sucursal: number <<FK>>
+  *Pedido_Cliente: number <<FK>>
+}
+
+entity "Detalle_Pedido" as Det_Ped {
+  *Detalle_Pedido_Numero: number <<FK>>
+  *Detalle_Pedido_Sillon: number <<FK>>
+  --
+  *Detalle_Pedido_Cantidad : number
+  *Detalle_Pedido_Precio : number
+  *Detalle_Pedido_Subtotal : number
+}
+
+entity "Cancelacion_Pedido" as Can_Ped{
+  *Cancelacion_Pedido_Numero: number <<FK>>
+  --
+  *Pedido_Cancelacion_Fecha: datetime
+  *Pedido_Cancelacion_Motivo: char(255)
+}
+
+entity "Cliente" as Cli {
+  *Cliente_Dni : number <<PK>>
+  --
+  *Cliente_Provincia: char(255)
+  *Cliente_Localidad: char(255)
+  *Cliente_Nombre: char(255)
+  *Cliente_Apellido: char(255)
+  *Cliente_FechaNacimiento: datetime
+  *Cliente_Mail: char(255)
+  *Cliente_Direccion: char(255)
+  *Cliente_Telefono: char(255)
+} 
+
+entity "Sucursal" as Suc {
+  *Sucursal_nro : number <<PK>>
+  --
+  *Sucursal_Provincia: char(255)
+  *Sucursal_Localidad: char(255)
+  *Sucursal_Direccion: char(255)
+  *Sucursal_Telefono: char(255)
+  *Sucursal_Mail: char(255)
+}
+
+entity "Sillon" as Si {
+  *Silon_Codigo: number <<PK>>
+  --
+  *Sillon_Modelo: Number <<FK>>
+}
+
+
+entity "Sillon_Modelo" as Si_Mod {
+  *Sillon_Modelo_Codigo : number <<PK>>
+  --
+  *Sillon_Modelo: char(255)
+  *Sillon_Modelo_Descripcion : char(255)
+  *Sillon_Modelo_Precio : number
+}
+
+entity "Sillon_Medida" as Si_Med {
+  *Silon_Codigo: number <<FK>>
+  --
+  *Sillon_Medida_Alto : number
+  *Sillon_Medida_Ancho : number
+  *Sillon_Medida_Profundidad : number
+  *Sillon_Medida_Precio : number
+}
+
+entity "Material" as Mat {
+  *Material_Nombre : char(255) <<PK>>
+  --
+  *Material_Tipo : char(255)
+  *Material_Descripcion : char(255)
+  *Material_Precio : number
+}
+
+entity "Tela" as Te {
+  *Tela_Nombre: char(255) <<FK>>
+  --
+  *Tela_Color : char(255)
+  *Tela_Textura : char(255)
+}
+
+entity "Madera" as Mad {
+  *Madera_Nombre: char(255) <<FK>>
+  --
+  *Madera_Color : char(255)
+  *Madera_Dureza : char(255)
+}
+
+entity "Relleno" as Re {
+  *Relleno_Nombre: char(255) <<FK>>
+  --
+  *Relleno_Densidad: number
+}
+
+entity "Factura" as Fac {
+  *Factura_Numero : number <<PK>>
+  --
+  *Factura_Fecha : datetime
+  *Factura_Total : number
+  *Factura_Cliente: number <<FK>>
+  *Factura_Sucursal: number <<FK>>
+}
+
+entity "Detalle_Factura" as Det_Fac {
+  *Detalle_Factura_Numero: number <<FK>>
+  *Detalle_Factura_DetPedido: number <<FK>>
+  --
+  *Detalle_Factura_Precio : number 
+  *Detalle_Factura_Cantidad : datetime
+  *Detalle_Factura_Subtotal : number
+}
+
+entity "Envio" as Env
+{
+  *Envio_Numero: number <<PK>>
+  --
+  *Envio_Factura: number <<FK>>
+  *Envio_Fecha_Programada: datetime
+  *Envio_Fecha: datetime
+  *Envio_ImporteTraslado: number
+  *Envio_importeSubida: number
+  *Envio_Total: number
+}
+
+entity "Compra" as Comp {
+  *Compra_Numero : number <<PK>>
+  --
+  *Compra_Sucursal: number <<FK>>
+  *Compra_Proveedor: char(255) <<FK>>
+  *Compra_Fecha: datetime
+  *Compra_Total: number
+}
+
+entity "Detalle_Compra" as Det_Comp {
+  *Detalle_Compra_Numero: number <<FK>>
+  *Detalle_Compra_Material: char(255) <<FK>>
+  --
+  *Detalle_Compra_Precio : number
+  *Detalle_Compra_Cantidad: number
+  *Detalle_Compra_Subtotal: number
+}
+
+entity "Proveedor" as Prov {
+  *Proveedor_Cuit : char(255) <<PK>>
+  --
+  *Proveedor_Provincia : char(255)
+  *Proveedor_Localidad : char(255)
+  *Proveedor_RazonSocial : char(255)
+  *Proveedor_Direccion : char(255)
+  *Proveedor_Telefono : char(255)
+  *Proveedor_Mail : char(255)
+}
+
+@enduml
