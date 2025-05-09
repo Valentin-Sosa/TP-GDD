@@ -4,6 +4,16 @@ skinparam linetype ortho
 
 ' ENTITIES DECLARATION
 
+entity "Sucursal" as Suc {
+  *Sucursal_nro : number <<PK>>
+  --
+  *Sucursal_Provincia: char(255)
+  *Sucursal_Localidad: char(255)
+  *Sucursal_Direccion: char(255)
+  *Sucursal_Telefono: char(255)
+  *Sucursal_Mail: char(255)
+}
+
 entity "Pedido" as Ped {
   *Pedido_Numero : number <<PK>>
   --
@@ -43,15 +53,6 @@ entity "Cliente" as Cli {
   *Cliente_Telefono: char(255)
 } 
 
-entity "Sucursal" as Suc {
-  *Sucursal_nro : number <<PK>>
-  --
-  *Sucursal_Provincia: char(255)
-  *Sucursal_Localidad: char(255)
-  *Sucursal_Direccion: char(255)
-  *Sucursal_Telefono: char(255)
-  *Sucursal_Mail: char(255)
-}
 
 entity "Sillon" as Si {
   *Silon_Codigo: number <<PK>>
