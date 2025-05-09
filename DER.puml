@@ -2,6 +2,8 @@
 
 skinparam linetype ortho
 
+' ENTITIES DECLARATION
+
 entity "Pedido" as Ped {
   *Pedido_Numero : number <<PK>>
   --
@@ -55,8 +57,14 @@ entity "Sillon" as Si {
   *Silon_Codigo: number <<PK>>
   --
   *Sillon_Modelo: Number <<FK>>
+  *Sillon_Medida: Number <<FK>>
 }
 
+entity "SillonXMaterial" as Si_Mat
+{
+  *Material: Number <<FK>>
+  *Sillon_Codigo: number <<FK>>
+}
 
 entity "Sillon_Modelo" as Si_Mod {
   *Sillon_Modelo_Codigo : number <<PK>>
@@ -67,7 +75,7 @@ entity "Sillon_Modelo" as Si_Mod {
 }
 
 entity "Sillon_Medida" as Si_Med {
-  *Silon_Codigo: number <<FK>>
+  *Sillon_Medida_Codigo : number <<PK>>
   --
   *Sillon_Medida_Alto : number
   *Sillon_Medida_Ancho : number
@@ -162,4 +170,44 @@ entity "Proveedor" as Prov {
   *Proveedor_Mail : char(255)
 }
 
+
+' ENTITIES RELATIONSHIPS
+
+' Pedidos
+Ped ||..|| Det_Ped
+
+Ped ||--o| Can_Ped
+Ped }o..|| Suc
+Ped }o..|| Cli
+
+Det_Ped ||..|{ Si
+' Sillon
+Si }o..|| Si_Mod
+Si }o..|| Si_Med
+Si }|..|{ Si_Mat
+Si_Mat }o..|| Mat
+
+' Sillon Materiales
+Mad }o..|| Mat
+Re  }o..|| Mat
+Te  }o..|| Mat
+
+' Facturacion
+Fac ||..|| Det_Fac
+Fac }o..|| Suc
+Fac }o..|| Cli
+
+Det_Fac ||..|| Det_Ped
+
+' Compra
+Comp ||..|| Det_Comp
+Comp }o..|| Suc
+Comp }o..|| Prov
+Comp ||..|| Det_Comp
+
+Det_Comp }o..|| Mat
+
+' Envio
+Env |o..|| Fac
+  
 @enduml
