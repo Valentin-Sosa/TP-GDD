@@ -1,0 +1,11 @@
+TO: gestiondedatos.entregas@gmail.com
+SUBJECT: TP1C2025 K3014 MAUV 4
+BODY:
+Grupo: MAUV
+Curso: K3014
+Integrantes:
+    -   Nicolau, Marcos Sebastian - 2096298
+    -   Bove, Uriel Julian - 2131407
+    -   Rysznivkier Alan - 1661760
+    -   Sosa, Valentin - 214.158-9
+
