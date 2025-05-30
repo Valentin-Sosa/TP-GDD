@@ -97,7 +97,7 @@ CREATE TABLE MAUV.Compra (
     Compra_Sucursal bigint FOREIGN KEY REFERENCES MAUV.Sucursal(Sucursal_Nro) NOT NULL,
     Compra_Proveedor nvarchar(255) FOREIGN KEY REFERENCES MAUV.Proveedor(Proveedor_Cuit) NOT NULL,
     Compra_Fecha datetime2(6),
-    Compra_Total decimal(18,0)
+    Compra_Total decimal(18,2)
 )
 
 CREATE TABLE MAUV.Pedido (
