@@ -4,7 +4,7 @@ GO
 CREATE SCHEMA MAUV
 GO
 
--- 1. Creacion tablas para materiales, sillon
+-- 1. Creacion tablas: materiales, sillon
 
 -- Materiales
 CREATE TABLE MAUV.Material (
@@ -34,7 +34,7 @@ CREATE TABLE MAUV.Relleno (
 
 -- Sillon
 CREATE TABLE MAUV.Sillon_Medida (
-    Sillon_Medida_Codigo decimal(18, 2) PRIMARY KEY NOT NULL,
+    Sillon_Medida_Codigo bigint PRIMARY KEY NOT NULL,
     Sillon_Medida_Alto decimal(18, 2),
     Sillon_Medida_Ancho decimal(18, 2),
     Sillon_Medida_Profundidad decimal(18, 2),
@@ -53,7 +53,7 @@ CREATE TABLE MAUV.Sillon_Modelo (
 CREATE TABLE MAUV.Sillon(
     Sillon_Codigo bigint PRIMARY KEY NOT NULL,
     Sillon_Modelo bigint FOREIGN KEY REFERENCES MAUV.Sillon_Modelo(Sillon_Modelo_Codigo),
-    Sillon_Medida decimal(18,2) FOREIGN KEY REFERENCES MAUV.Sillon_Medida(Sillon_Medida_Codigo)
+    Sillon_Medida bigint FOREIGN KEY REFERENCES MAUV.Sillon_Medida(Sillon_Medida_Codigo)
 )
 
 CREATE TABLE MAUV.SillonXMaterial (
@@ -61,7 +61,7 @@ CREATE TABLE MAUV.SillonXMaterial (
     Sillon_Codigo bigint FOREIGN KEY REFERENCES MAUV.Sillon(Sillon_Codigo)
 )
 
--- 2. Creacion Sucursal, Cliente, Pedido, Factura, Envio
+-- 2. Creacion Sucursal, Cliente, Proveedor, Compra, Pedido, Factura, Envio
 CREATE TABLE MAUV.Sucursal (
     Sucursal_Nro bigint PRIMARY KEY IDENTITY(1,1) NOT NULL,
     Sucursal_Provincia nvarchar(255),
@@ -102,9 +102,9 @@ CREATE TABLE MAUV.Compra (
 
 CREATE TABLE MAUV.Pedido (
     Pedido_Numero decimal(18,0) PRIMARY KEY NOT NULL,
-    Pedido_Fecha nvarchar(255),
+    Pedido_Fecha datetime2(6),
     Pedido_Estado nvarchar(255),
-    Pedido_Total nvarchar(255),
+    Pedido_Total decimal(18,2),
     Pedido_Sucursal bigint FOREIGN KEY REFERENCES MAUV.Sucursal(Sucursal_Nro),
     Pedido_Cliente bigint FOREIGN KEY REFERENCES MAUV.Cliente(Cliente_Dni)
 )
@@ -112,7 +112,7 @@ CREATE TABLE MAUV.Pedido (
 CREATE TABLE MAUV.Cancelacion_Pedido (
     Cancelacion_Pedido_Numero decimal(18,0) FOREIGN KEY REFERENCES MAUV.Pedido(Pedido_Numero) NOT NULL,
     Pedido_Cancelacion_Fecha datetime2(6),
-    Pedido_Cancelacion_Motivo nvarchar(255)
+    Pedido_Cancelacion_Motivo varchar(255)
 )
 
 CREATE TABLE MAUV.Factura (
@@ -134,13 +134,13 @@ CREATE TABLE MAUV.Envio (
 )
 
 
--- 3. Creacion detalles
+-- 3. Creacion detalles Pedido, Factura, Compra
 CREATE TABLE MAUV.Detalle_Pedido (
     Detalle_Pedido_Numero decimal(18,0) PRIMARY KEY NOT NULL,
     Detalle_Pedido_Sillon bigint FOREIGN KEY REFERENCES MAUV.Sillon(Sillon_Codigo) NOT NULL,
     Detalle_Pedido_Cantidad bigint,
-    Detalle_Pedido_Precio decimal(18,0),
-    Detalle_Pedido_Subtotal decimal(18,0)
+    Detalle_Pedido_Precio decimal(18,2),
+    Detalle_Pedido_Subtotal decimal(18,2)
     FOREIGN KEY (Detalle_Pedido_Numero) REFERENCES MAUV.Pedido(Pedido_Numero)
 )
 
