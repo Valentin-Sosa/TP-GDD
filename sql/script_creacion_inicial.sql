@@ -162,7 +162,7 @@ CREATE TABLE MAUV.Detalle_Compra (
     Detalle_Compra_SubTotal decimal(18,2) NULL
 )
 
--- Insertamos los Materiales válidos en MAUV.<Nombre_Tabla>
+-- Insertamos los Materiales válidos en MAUV.Material
 INSERT INTO MAUV.Material (
     Material_Nombre,
     Material_Tipo, 
@@ -213,7 +213,7 @@ WHERE
     -- Validamos que el campo que referencia a Material no sea NULL
     Madera_Nombre IS NOT NULL;
 
--- Insertamos los rellenos válidos en MAUV.<Nombre_Tabla>
+-- Insertamos los rellenos válidos en MAUV.Relleno
 INSERT INTO MAUV.Relleno (
     Relleno_Nombre,
     Relleno_Densidad
@@ -229,7 +229,7 @@ WHERE
     Relleno_Nombre IS NOT NULL;
 
 -- SILLON
--- Insertamos los sillones válidos en MAUV.<Nombre_Tabla>
+-- Insertamos los sillones válidos en MAUV.Silon_Medida
 INSERT INTO MAUV.Sillon_Medida (
     Sillon_Medida_Codigo,
     Sillon_Medida_Alto,
@@ -249,7 +249,7 @@ FROM
 WHERE
     Sillon_Medida_Codigo IS NOT NULL;
 
--- Insertamos los sillones modelos válidos en MAUV.<Nombre_Tabla>
+-- Insertamos los sillones modelos válidos en MAUV.Sillon_Modelo
 INSERT INTO MAUV.Sillon_Modelo (
     Sillon_Modelo_Codigo,
     Sillon_Modelo,
@@ -267,7 +267,7 @@ FROM
 WHERE
     Sillon_Modelo_Codigo IS NOT NULL;
 
--- Insertamos los sillones válidos en MAUV.<Nombre_Tabla>
+-- Insertamos los sillones válidos en MAUV.Sillon
 INSERT INTO MAUV.Sillon (
     Sillon_Codigo,
     Sillon_Modelo,
@@ -283,7 +283,7 @@ FROM
 WHERE
     Sillon_Codigo IS NOT NULL;
 
--- Insertamos los sillones x material válidos en MAUV.<Nombre_Tabla>
+-- Insertamos los sillones x material válidos en MAUV.SillonXMaterial
 INSERT INTO MAUV.SillonXMaterial (
     Material,
     Sillon_Codigo
@@ -297,7 +297,7 @@ FROM
 WHERE
     Material IS NOT NULL AND Sillon_Codigo IS NOT NULL;
 
--- Insertamos los sucursales válidas en MAUV.<Nombre_Tabla>
+-- Insertamos los sucursales válidas en MAUV.Sucursal
 INSERT INTO MAUV.Sucursal (
     Sucursal_NroSucursal,
     Sucursal_Provincia,
@@ -347,7 +347,7 @@ FROM
 -- Cada INSERT verifica que el campo (primaria o foranea) no sea nulo
 WHERE Cliente_Dni IS NOT NULL;
 
--- Insertamos los proveedores válidos en MAUV.<Nombre_Tabla>
+-- Insertamos los proveedores válidos en MAUV.Proveedor
 INSERT INTO MAUV.Proveedor (
     Proveedor_Cuit,
     Proveedor_Provincia,
@@ -371,7 +371,7 @@ FROM
 WHERE
     Proveedor_Cuit IS NOT NULL;
 
--- Insertamos las compras válidos en MAUV.<Nombre_Tabla>
+-- Insertamos las compras válidos en MAUV.Compra
 INSERT INTO MAUV.Compra (
     Compra_Numero,
     Compra_Sucursal,
@@ -391,7 +391,7 @@ FROM
 WHERE
     Compra_Numero IS NOT NULL;
 
--- Insertamos los pedidos válidos en MAUV.<Nombre_Tabla>
+-- Insertamos los pedidos válidos en MAUV.Pedido
 INSERT INTO MAUV.Pedido (
     Pedido_Numero,
     Pedido_Fecha,
@@ -413,7 +413,7 @@ FROM
 WHERE
     Pedido_Numero IS NOT NULL AND Pedido_Sucursal IS NOT NULL AND Pedido_Cliente IS NOT NULL;  
 
--- Insertamos las cancelaciones de pedidos válidos en MAUV.<Nombre_Tabla>
+-- Insertamos las cancelaciones de pedidos válidos en MAUV.Cancelacion_Pedido
 INSERT INTO MAUV.Cancelacion_Pedido (
     Cancelacion_Pedido_Numero,
     Pedido_Cancelacion_Fecha,
@@ -429,7 +429,7 @@ FROM
 WHERE
     Cancelacion_Pedido_Numero IS NOT NULL;
 
--- Insertamos las facturas válidos en MAUV.<Nombre_Tabla>
+-- Insertamos las facturas válidos en MAUV.Factura
 INSERT INTO MAUV.Factura (
     Factura_Numero,
     Factura_Fecha,
@@ -449,7 +449,7 @@ FROM
 WHERE
     Factura_Numero IS NOT NULL AND Factura_Cliente IS NOT NULL AND Factura_Sucursal IS NOT NULL;
 
--- Insertamos los envios válidos en MAUV.<Nombre_Tabla>
+-- Insertamos los envios válidos en MAUV.Envio
 INSERT INTO MAUV.Envio (
     Envio_Numero,
     Envio_Factura,
@@ -473,7 +473,7 @@ FROM
 WHERE
     Envio_Numero IS NOT NULL AND Envio_Factura IS NOT NULL;
 
--- Insertamos los detalles de pedidos válidos en MAUV.<Nombre_Tabla>
+-- Insertamos los detalles de pedidos válidos en MAUV.Detalle_Pedido
 INSERT INTO MAUV.Detalle_Pedido (
     Detalle_Pedido_Numero,
     Detalle_Pedido_Sillon,
@@ -493,7 +493,7 @@ FROM
 WHERE
     Detalle_Pedido_Numero IS NOT NULL AND Detalle_Pedido_Sillon IS NOT NULL AND Detalle_Pedido_Subtotal IS NOT NULL;
 
--- Insertamos los detalles de factuars válidos en MAUV.<Nombre_Tabla>
+-- Insertamos los detalles de factuars válidos en MAUV.Detalle_Factura
 INSERT INTO MAUV.Detalle_Factura (
     Detalle_Factura_Numero,
     Detalle_Factura_DetPedido,
@@ -514,7 +514,7 @@ FROM
 WHERE
     Detalle_Factura_Numero IS NOT NULL AND Detalle_Factura_DetPedido IS NOT NULL;
 
--- Insertamos los detalles de compras válidos en MAUV.<Nombre_Tabla>
+-- Insertamos los detalles de compras válidos en MAUV.Detalle_Compra
 INSERT INTO MAUV.Detalle_Compra (
     Detalle_Compra_Numero,
     Detalle_Compra_Material,
@@ -535,23 +535,46 @@ WHERE
     Detalle_Compra_Numero IS NOT NULL AND Detalle_Compra_Material IS NOT NULL;
 
 PRINT '---------------------------------------------------------------';
-PRINT 'Resumen: registros NO insertables por tener PK en NULL en Maestra';
+PRINT 'Resumen: registros NO insertables por tener PK o FK en NULL en Maestra';
 PRINT '---------------------------------------------------------------';
 
+-- PKs
 SELECT COUNT(*) AS [Clientes_sin_DNI] FROM gd_esquema.Maestra WHERE Cliente_Dni IS NULL;
 SELECT COUNT(*) AS [Proveedores_sin_CUIT] FROM gd_esquema.Maestra WHERE Proveedor_Cuit IS NULL;
 SELECT COUNT(*) AS [Sucursales_sin_NroSucursal] FROM gd_esquema.Maestra WHERE Sucursal_NroSucursal IS NULL;
 SELECT COUNT(*) AS [Materiales_sin_Nombre] FROM gd_esquema.Maestra WHERE Material_Nombre IS NULL;
 SELECT COUNT(*) AS [Sillon_Modelo_sin_Codigo] FROM gd_esquema.Maestra WHERE Sillon_Modelo_Codigo IS NULL;
-SELECT COUNT(*) AS [Sillon_Medida_sin_Codigo] FROM gd_esquema.Maestra WHERE Sillon_Codigo IS NULL;
+SELECT COUNT(*) AS [Sillon_Medida_sin_Codigo] FROM gd_esquema.Maestra WHERE Sillon_Medida_Codigo IS NULL;
 SELECT COUNT(*) AS [Sillones_sin_Codigo] FROM gd_esquema.Maestra WHERE Sillon_Codigo IS NULL;
 SELECT COUNT(*) AS [Pedidos_sin_Numero] FROM gd_esquema.Maestra WHERE Pedido_Numero IS NULL;
 SELECT COUNT(*) AS [Facturas_sin_Numero] FROM gd_esquema.Maestra WHERE Factura_Numero IS NULL;
 SELECT COUNT(*) AS [Envios_sin_Numero] FROM gd_esquema.Maestra WHERE Envio_Numero IS NULL;
 SELECT COUNT(*) AS [Compras_sin_Numero] FROM gd_esquema.Maestra WHERE Compra_Numero IS NULL;
-SELECT COUNT(*) AS [Detalle_Compra_sin_Numero] FROM gd_esquema.Maestra WHERE Compra_Numero IS NULL;
-SELECT COUNT(*) AS [Detalle_Pedido_sin_Numero] FROM gd_esquema.Maestra WHERE Pedido_Numero IS NULL;
-SELECT COUNT(*) AS [Detalle_Factura_sin_Numero] FROM gd_esquema.Maestra WHERE Factura_Numero IS NULL;
+SELECT COUNT(*) AS [Detalle_Compra_sin_Numero] FROM gd_esquema.Maestra WHERE Detalle_Compra_Numero IS NULL;
+SELECT COUNT(*) AS [Detalle_Pedido_sin_Numero] FROM gd_esquema.Maestra WHERE Detalle_Pedido_Numero IS NULL;
+SELECT COUNT(*) AS [Detalle_Factura_sin_Numero] FROM gd_esquema.Maestra WHERE Detalle_Factura_Numero IS NULL;
+
+-- FKs
+SELECT COUNT(*) AS [Rellenos_sin_Material] FROM gd_esquema.Maestra WHERE Relleno_Nombre IS NULL;
+SELECT COUNT(*) AS [Telas_sin_Material] FROM gd_esquema.Maestra WHERE Tela_Nombre IS NULL;
+SELECT COUNT(*) AS [Maderas_sin_Material] FROM gd_esquema.Maestra WHERE Madera_Nombre IS NULL;
+SELECT COUNT(*) AS [Sillon_sin_Modelo] FROM gd_esquema.Maestra WHERE Sillon_Modelo IS NULL;
+SELECT COUNT(*) AS [Sillon_sin_Medida] FROM gd_esquema.Maestra WHERE Sillon_Medida IS NULL;
+SELECT COUNT(*) AS [SillonXMaterial_sin_Sillon] FROM gd_esquema.Maestra WHERE Sillon_Codigo IS NULL;
+SELECT COUNT(*) AS [SillonXMaterial_sin_Material] FROM gd_esquema.Maestra WHERE Material IS NULL;
+SELECT COUNT(*) AS [Compra_sin_Sucursal] FROM gd_esquema.Maestra WHERE Compra_Sucursal IS NULL;
+SELECT COUNT(*) AS [Compra_sin_Proveedor] FROM gd_esquema.Maestra WHERE Compra_Proveedor IS NULL;
+SELECT COUNT(*) AS [Pedido_sin_Sucursal] FROM gd_esquema.Maestra WHERE Pedido_Sucursal IS NULL;
+SELECT COUNT(*) AS [Pedido_sin_Cliente] FROM gd_esquema.Maestra WHERE Pedido_Cliente IS NULL;
+SELECT COUNT(*) AS [Cancelacion_sin_Pedido] FROM gd_esquema.Maestra WHERE Cancelacion_Pedido_Numero IS NULL;
+SELECT COUNT(*) AS [Factura_sin_Cliente] FROM gd_esquema.Maestra WHERE Factura_Cliente IS NULL;
+SELECT COUNT(*) AS [Factura_sin_Sucursal] FROM gd_esquema.Maestra WHERE Factura_Sucursal IS NULL;
+SELECT COUNT(*) AS [Envio_sin_Factura] FROM gd_esquema.Maestra WHERE Envio_Factura IS NULL;
+SELECT COUNT(*) AS [DetPedido_sin_Sillon] FROM gd_esquema.Maestra WHERE Detalle_Pedido_Sillon IS NULL;
+SELECT COUNT(*) AS [DetFactura_sin_Pedido] FROM gd_esquema.Maestra WHERE Detalle_Factura_DetPedido IS NULL;
+SELECT COUNT(*) AS [DetFactura_sin_Factura] FROM gd_esquema.Maestra WHERE Detalle_Factura_Numero IS NULL;
+SELECT COUNT(*) AS [DetCompra_sin_Material] FROM gd_esquema.Maestra WHERE Detalle_Compra_Material IS NULL;
+SELECT COUNT(*) AS [DetCompra_sin_Compra] FROM gd_esquema.Maestra WHERE Detalle_Compra_Numero IS NULL;
 
 PRINT '---------------------------------------------------------------';
 PRINT 'Resumen final: cantidad de registros insertados en cada tabla MAUV';
