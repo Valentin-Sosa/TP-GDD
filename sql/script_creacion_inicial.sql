@@ -242,10 +242,12 @@ BEGIN
 END;
 GO
 
+EXEC MAUV.crear_tablas;
+GO
+
 ------------------------------------------------------
 -- Creacion de Triggers
 ------------------------------------------------------
-
 -- trigger para que una cancelacion de pedigo no haga referencia a un pedido creado en fechas posterior
 CREATE OR ALTER TRIGGER trg_cancelacion_pedido_fecha_valida ON MAUV.Cancelacion_Pedido
 INSTEAD OF INSERT AS
@@ -254,7 +256,7 @@ BEGIN
         SELECT 1
         FROM inserted i
         JOIN MAUV.Pedido p ON i.Cancelacion_Pedido_Numero = p.Pedido_Numero
-        WHERE p.Pedido_Fecha > GETDATE()
+        WHERE p.Pedido_Fecha > i.Pedido_Cancelacion_Fecha
     )
     BEGIN
         RAISERROR ('No se puede cancelar un pedido cuya fecha está en el futuro.', 16, 1)
@@ -289,7 +291,7 @@ BEGIN
         SELECT 1
         FROM inserted i
         JOIN deleted d ON i.Factura_Numero = d.Factura_Numero
-        WHERE i.Factuura_Fecha < d.Factuura_Fecha
+        WHERE i.Factura_Fecha < d.Factura_Fecha
     )
     BEGIN
         RAISERROR ('No se puede modificar la fecha de una factura anterior.', 16, 1)
@@ -297,6 +299,8 @@ BEGIN
     END
 END;
 GO
+
+
 
 ------------------------------------------------------
 -- Migracion de datos desde maestra
@@ -751,7 +755,6 @@ GO
 
 BEGIN TRY
     BEGIN TRANSACTION;
-        EXEC MAUV.crear_tablas;
         EXEC MAUV.migrar_materiales;
         EXEC MAUV.migrar_sillones;
         EXEC MAUV.migrar_sucursales_clientes_proveedores;
