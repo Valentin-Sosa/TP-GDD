@@ -194,7 +194,7 @@ Re  }o..|| Mat
 Te  }o..|| Mat
 
 ' Facturacion
-Fac ||..|| Det_Fac
+Fac ||..o| Det_Fac
 Fac }o..|| Suc
 Fac }o..|| Cli
 
