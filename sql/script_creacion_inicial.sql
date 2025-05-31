@@ -540,6 +540,7 @@ BEGIN
         detalle_factura_subtotal decimal(18,2)
     )
 
+    -- Here we need to Join tables as when sillon info is present, factura is not!
     INSERT INTO MAUV.detalles_temp (
         detalle_pedido_numero,
         detalle_pedido_sillon,
@@ -552,19 +553,21 @@ BEGIN
         detalle_factura_subtotal
     )
     SELECT DISTINCT
-        Pedido_Numero,
-        Sillon_Codigo,
-        Detalle_Pedido_Cantidad,
-        Detalle_Pedido_Precio,
-        Detalle_Pedido_Subtotal,
-        Factura_Numero,
-        Detalle_Factura_Precio,
-        Detalle_Factura_Cantidad,
-        Detalle_Factura_Subtotal
-    FROM
-        gd_esquema.Maestra
+        p.Pedido_Numero,
+        p.Sillon_Codigo,
+        p.Detalle_Pedido_Cantidad,
+        p.Detalle_Pedido_Precio,
+        p.Detalle_Pedido_Subtotal,
+        f.Factura_Numero,
+        f.Detalle_Factura_Precio,
+        f.Detalle_Factura_Cantidad,
+        f.Detalle_Factura_Subtotal
+    FROM gd_esquema.Maestra p
+    JOIN gd_esquema.Maestra f ON p.Pedido_Numero = f.Pedido_Numero
     WHERE
-        Pedido_Numero IS NOT NULL AND Sillon_Codigo IS NOT NULL;
+        p.Pedido_Numero IS NOT NULL AND
+        p.Sillon_Codigo IS NOT NULL AND
+        f.Factura_Numero IS NOT NULL;
 
     INSERT INTO MAUV.Detalle_Pedido (
         Detalle_Pedido_Codigo,
