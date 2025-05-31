@@ -143,17 +143,18 @@ BEGIN
 
     -- 3. Creacion detalles Pedido, Factura, Compra
     CREATE TABLE MAUV.Detalle_Pedido (
-        Detalle_Pedido_Numero decimal(18,0) PRIMARY KEY NOT NULL,
+        Detalle_Pedido_Codigo bigint PRIMARY KEY NOT NULL,
+        Detalle_Pedido_Numero decimal(18,0) FOREIGN KEY REFERENCES MAUV.Pedido(Pedido_Numero) NOT NULL,
         Detalle_Pedido_Sillon bigint FOREIGN KEY REFERENCES MAUV.Sillon(Sillon_Codigo) NOT NULL,
         Detalle_Pedido_Cantidad bigint,
         Detalle_Pedido_Precio decimal(18,2),
         Detalle_Pedido_Subtotal decimal(18,2)
-        FOREIGN KEY (Detalle_Pedido_Numero) REFERENCES MAUV.Pedido(Pedido_Numero)
     )
 
     CREATE TABLE MAUV.Detalle_Factura (
+        Detalle_Factura_Codigo bigint PRIMARY KEY IDENTITY(1,1) NOT NULL,
         Detalle_Factura_Numero bigint FOREIGN KEY REFERENCES MAUV.Factura(Factura_Numero) NOT NULL,
-        Detalle_Factura_DetPedido decimal(18,0) FOREIGN KEY REFERENCES MAUV.Detalle_Pedido(Detalle_Pedido_Numero) NOT NULL,
+        Detalle_Factura_DetPedido bigint FOREIGN KEY REFERENCES MAUV.Detalle_Pedido(Detalle_Pedido_Codigo) NOT NULL,
         Detalle_Factura_Precio decimal(18, 2),
         Detalle_Factura_Cantidad decimal(18,0),
         Detalle_Factura_Subtotal decimal(18, 2)
@@ -523,23 +524,65 @@ GO
 
 CREATE or ALTER PROCEDURE MAUV.migrar_detalles AS
 BEGIN
-    INSERT INTO MAUV.Detalle_Pedido (
-        Detalle_Pedido_Numero,
-        Detalle_Pedido_Sillon,
-        Detalle_Pedido_Cantidad,
-        Detalle_Pedido_Precio,
-        Detalle_Pedido_Subtotal
+    -- As we have done with sillones
+    -- here we need to create another temporary table to store the Detalle_Pedido pk
+    -- and be able to pass it to Detalle_Factura
+    CREATE TABLE MAUV.detalles_temp (
+        detalle_pedido_codigo bigint IDENTITY(1,1),
+        detalle_pedido_numero decimal(18,0),
+        detalle_pedido_sillon bigint,
+        detalle_pedido_cantidad bigint,
+        detalle_pedido_precio decimal(18,2),
+        detalle_pedido_subtotal decimal(18,2),
+        detalle_factura_numero bigint,
+        detalle_factura_precio decimal(18,2),
+        detalle_factura_cantidad decimal(18,0),
+        detalle_factura_subtotal decimal(18,2)
+    )
+
+    INSERT INTO MAUV.detalles_temp (
+        detalle_pedido_numero,
+        detalle_pedido_sillon,
+        detalle_pedido_cantidad,
+        detalle_pedido_precio,
+        detalle_pedido_subtotal,
+        detalle_factura_numero,
+        detalle_factura_precio,
+        detalle_factura_cantidad,
+        detalle_factura_subtotal
     )
     SELECT DISTINCT
         Pedido_Numero,
         Sillon_Codigo,
         Detalle_Pedido_Cantidad,
         Detalle_Pedido_Precio,
-        Detalle_Pedido_Subtotal
+        Detalle_Pedido_Subtotal,
+        Factura_Numero,
+        Detalle_Factura_Precio,
+        Detalle_Factura_Cantidad,
+        Detalle_Factura_Subtotal
     FROM
         gd_esquema.Maestra
     WHERE
         Pedido_Numero IS NOT NULL AND Sillon_Codigo IS NOT NULL;
+
+    INSERT INTO MAUV.Detalle_Pedido (
+        Detalle_Pedido_Codigo,
+        Detalle_Pedido_Numero,
+        Detalle_Pedido_Sillon,
+        Detalle_Pedido_Cantidad,
+        Detalle_Pedido_Precio,
+        Detalle_Pedido_Subtotal
+    )
+    SELECT
+        detalle_pedido_codigo,
+        detalle_pedido_numero,
+        detalle_pedido_sillon,
+        detalle_pedido_cantidad,
+        detalle_pedido_precio,
+        detalle_pedido_subtotal
+    FROM 
+        MAUV.detalles_temp
 
     INSERT INTO MAUV.Detalle_Factura (
         Detalle_Factura_Numero,
@@ -548,16 +591,16 @@ BEGIN
         Detalle_Factura_Cantidad,
         Detalle_Factura_Subtotal
     )
-    SELECT DISTINCT
-        Factura_Numero,
-        Pedido_Numero,
-        Detalle_Factura_Precio,
-        Detalle_Factura_Cantidad,
-        Detalle_Factura_Subtotal
-    FROM
-        gd_esquema.Maestra
-    WHERE
-        Factura_Numero IS NOT NULL AND Pedido_Numero IS NOT NULL;
+    SELECT
+        detalle_factura_numero,
+        detalle_pedido_codigo,
+        detalle_factura_precio,
+        detalle_factura_cantidad,
+        detalle_factura_subtotal
+    FROM 
+        MAUV.detalles_temp
+     WHERE
+        detalle_factura_numero IS NOT NULL;
 
     INSERT INTO MAUV.Detalle_Compra (
         Detalle_Compra_Numero,
@@ -576,6 +619,8 @@ BEGIN
         gd_esquema.Maestra
     WHERE
         Compra_Numero IS NOT NULL AND Material_Nombre IS NOT NULL;
+    
+    DROP TABLE MAUV.detalles_temp;
 END;
 GO
 

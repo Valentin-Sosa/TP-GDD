@@ -175,7 +175,7 @@ entity "Proveedor" as Prov {
 ' ENTITIES RELATIONSHIPS
 
 ' Pedidos
-Ped ||..|| Det_Ped
+Ped ||..o| Det_Ped
 
 Ped ||--o| Can_Ped
 Ped }o..|| Suc
