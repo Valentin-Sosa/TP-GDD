@@ -85,7 +85,7 @@ CREATE TABLE MAUV.Cliente (
     Cliente_Mail nvarchar(255),
     Cliente_Direccion nvarchar(255),
     Cliente_Telefono nvarchar(255),
-    Cliente_Localidad nvarchar(255) -- Se agrega esta linea que esta en la maestra
+    Cliente_Localidad nvarchar(255)
 )
 
 CREATE TABLE MAUV.Proveedor (
@@ -383,7 +383,7 @@ BEGIN
         Cliente_Provincia,
         Cliente_Nombre,
         Cliente_Apellido,
-        Cliente_Fecha_Nacimiento,
+        Cliente_FechaNacimiento,
         Cliente_Mail,
         Cliente_Direccion,
         Cliente_Telefono,
@@ -418,6 +418,7 @@ GO
 
 
 CREATE or ALTER PROCEDURE MAUV.migrar_compras AS
+BEGIN
     INSERT INTO MAUV.Compra (
         Compra_Numero,
         Compra_Sucursal,
@@ -435,7 +436,6 @@ CREATE or ALTER PROCEDURE MAUV.migrar_compras AS
         gd_esquema.Maestra
     WHERE
         Compra_Numero IS NOT NULL AND Sucursal_NroSucursal IS NOT NULL;
-BEGIN
 END;
 GO
 
@@ -580,10 +580,18 @@ BEGIN
 END;
 GO
 
-EXEC MAUV.migrar_materiales;
-EXEC MAUV.migrar_sillones;
-EXEC MAUV.migrar_sucursales_clientes_proveedores;
-EXEC MAUV.migrar_compras;
-EXEC MAUV.migrar_pedidos;
-EXEC MAUV.migrar_facturas_envios;
-EXEC MAUV.migrar_detalles;
+BEGIN TRY
+    BEGIN TRANSACTION;
+        EXEC MAUV.migrar_materiales;
+        EXEC MAUV.migrar_sillones;
+        EXEC MAUV.migrar_sucursales_clientes_proveedores;
+        EXEC MAUV.migrar_compras;
+        EXEC MAUV.migrar_pedidos;
+        EXEC MAUV.migrar_facturas_envios;
+        EXEC MAUV.migrar_detalles;
+    COMMIT TRANSACTION;
+END TRY
+BEGIN CATCH
+    ROLLBACK TRANSACTION;
+    THROW;  
+END CATCH;
