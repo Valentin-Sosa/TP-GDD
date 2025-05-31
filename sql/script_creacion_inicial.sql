@@ -39,7 +39,7 @@ CREATE TABLE MAUV.Relleno (
 
 -- Sillon
 CREATE TABLE MAUV.Sillon_Medida (
-    Sillon_Medida_Codigo bigint PRIMARY KEY IDENTITY(1,1) NOT NULL,
+    Sillon_Medida_Codigo bigint PRIMARY KEY NOT NULL,
     Sillon_Medida_Alto decimal(18, 2),
     Sillon_Medida_Ancho decimal(18, 2),
     Sillon_Medida_Profundidad decimal(18, 2),
@@ -247,9 +247,10 @@ BEGIN
     CREATE TABLE MAUV.sillon_temporal (
         sillon_codigo bigint,
         modelo_codigo bigint,
+        modelo nvarchar(255),
         modelo_descripcion nvarchar(255),
         modelo_precio decimal(18,2),
-        medida_codigo bigint IDENTITY(1,1)
+        medida_codigo bigint IDENTITY(1,1),
         medida_ancho decimal(18,2),
         medida_alto decimal(18,2),
         medida_profundidad decimal(18,2),
@@ -259,21 +260,24 @@ BEGIN
     INSERT INTO MAUV.sillon_temporal (
         sillon_codigo,
         modelo_codigo,
+        modelo,
         modelo_descripcion,
         modelo_precio,
         medida_ancho,
         medida_alto,
         medida_profundidad,
-        medida_precio,
+        medida_precio
     ) 
     SELECT DISTINCT (
         Sillon_Codigo, 
         Sillon_Modelo_Codigo, 
         Sillon_Modelo, 
         Sillon_Modelo_Descripcion, 
+        Sillon_Modelo_Precio, 
         Sillon_Medida_Alto, 
         Sillon_Medida_Ancho,
-        Sillon_Medida_Profundidad
+        Sillon_Medida_Profundidad,
+        Sillon_Medida_Precio
     )
     FROM gd_esquema.Maestra;
     
@@ -293,7 +297,7 @@ BEGIN
     FROM
         MAUV.sillon_temporal
     WHERE
-        medida_codigo IS NOT NULL;
+        medida_codigo IS NOT NULL AND medida_alto IS NOT NULL AND medida_ancho IS NOT NULL AND medida_profundidad IS NOT NULL;
 
     INSERT INTO MAUV.Sillon_Modelo (
         Sillon_Modelo_Codigo,
@@ -301,7 +305,7 @@ BEGIN
         Sillon_Modelo_Descripcion,
         Sillon_Modelo_Precio
     )
-    SELECT
+    SELECT DISTINCT
         modelo_codigo,
         modelo,
         modelo_descripcion,
@@ -319,7 +323,7 @@ BEGIN
     SELECT
         sillon_codigo
         modelo_codigo,   
-        medida_codigo,
+        medida_codigo
     FROM
         MAUV.sillon_temporal
     WHERE
