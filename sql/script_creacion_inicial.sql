@@ -102,7 +102,6 @@ BEGIN
     -- Make sure client is older than 18
     ALTER TABLE MAUV.Cliente ADD CONSTRAINT cliente_mayor_edad
     CHECK (
-        Cliente_Fecha_Nacimiento IS NULL 
         DATEDIFF(YEAR, Cliente_Fecha_Nacimiento, GETDATE()) >= 18
     );
 
@@ -193,7 +192,7 @@ BEGIN
 
     -- Make sure Detalle_Pedido_Precio is non-negative
     ALTER TABLE MAUV.Detalle_Pedido ADD CONSTRAINT detalle_pedido_precio_no_negativo 
-    CHECK (OR Detalle_Pedido_Precio >= 0);
+    CHECK (Detalle_Pedido_Precio >= 0);
 
     -- Make sure Detalle_Pedido_Subtotal is non-negative
     ALTER TABLE MAUV.Detalle_Pedido ADD CONSTRAINT detalle_pedido_subtotal_no_negativo 
@@ -247,7 +246,57 @@ GO
 -- Creacion de Triggers
 ------------------------------------------------------
 
--- TODO
+-- trigger para que una cancelacion de pedigo no haga referencia a un pedido creado en fechas posterior
+CREATE OR ALTER TRIGGER trg_cancelacion_pedido_fecha_valida ON MAUV.Cancelacion_Pedido
+INSTEAD OF INSERT AS
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM inserted i
+        JOIN MAUV.Pedido p ON i.Cancelacion_Pedido_Numero = p.Pedido_Numero
+        WHERE p.Pedido_Fecha > GETDATE()
+    )
+    BEGIN
+        RAISERROR ('No se puede cancelar un pedido cuya fecha está en el futuro.', 16, 1)
+        ROLLBACK
+        RETURN
+    END
+END;
+GO
+
+-- trigger para que no sea posible modificar un pedido con fecha pasada
+CREATE OR ALTER TRIGGER trg_pedido_no_modificar_fecha_pasada ON MAUV.Pedido
+AFTER UPDATE AS
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM inserted i
+        JOIN deleted d ON i.Pedido_Numero = d.Pedido_Numero
+        WHERE i.Pedido_Fecha < d.Pedido_Fecha
+    )
+    BEGIN
+        RAISERROR ('No se puede modificar la fecha del pedido a una anterior.', 16, 1)
+        ROLLBACK
+    END
+END;
+GO
+
+-- trigger para que no sea posible modificar una factura con fecha pasada
+CREATE OR ALTER TRIGGER trg_factura_no_modificar_fecha_pasada ON MAUV.Factura
+AFTER UPDATE AS
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM inserted i
+        JOIN deleted d ON i.Factura_Numero = d.Factura_Numero
+        WHERE i.Factuura_Fecha < d.Factuura_Fecha
+    )
+    BEGIN
+        RAISERROR ('No se puede modificar la fecha de una factura anterior.', 16, 1)
+        ROLLBACK
+    END
+END;
+GO
 
 ------------------------------------------------------
 -- Migracion de datos desde maestra
