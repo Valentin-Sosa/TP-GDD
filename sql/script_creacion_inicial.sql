@@ -4,37 +4,42 @@ GO
 CREATE SCHEMA MAUV
 GO
 
+------------------------------------------------------
+-- Creacion de tablas + constraints
+------------------------------------------------------
+
+
 -- 1. Creacion tablas: materiales, sillon
 
 -- Materiales
 CREATE TABLE MAUV.Material (
     Material_Nombre nvarchar(255) PRIMARY KEY NOT NULL,
-    Material_Tipo nvarchar(255),
-    Material_Descripcion nvarchar(255),
-    Material_Precio decimal(38, 2)
+    Material_Tipo nvarchar(255) NOT NULL,
+    Material_Descripcion nvarchar(255) NOT NULL,
+    Material_Precio decimal(38, 2) NOT NULL
 )
 
 CREATE TABLE MAUV.Tela (
-    Tela_Nombre nvarchar(255) FOREIGN KEY REFERENCES MAUV.Material(Material_Nombre),
-    Tela_Color nvarchar(255),
-    Tela_Textura nvarchar(255)
+    Tela_Nombre nvarchar(255) FOREIGN KEY REFERENCES MAUV.Material(Material_Nombre) NOT NULL,
+    Tela_Color nvarchar(255) NOT NULL,
+    Tela_Textura nvarchar(255) NOT NULL
 )
 
 CREATE TABLE MAUV.Madera (
-    Madera_Nombre nvarchar(255) FOREIGN KEY REFERENCES MAUV.Material(Material_Nombre),
-    Madera_Color nvarchar(255),
-    Madera_Dureza nvarchar(255)
+    Madera_Nombre nvarchar(255) FOREIGN KEY REFERENCES MAUV.Material(Material_Nombre) NOT NULL,
+    Madera_Color nvarchar(255) NOT NULL,
+    Madera_Dureza nvarchar(255) NOT NULL
 )
 
 CREATE TABLE MAUV.Relleno (
     Relleno_Nombre nvarchar(255) FOREIGN KEY REFERENCES MAUV.Material(Material_Nombre) NOT NULL,
-    Relleno_Densidad decimal(38, 2) NULL
+    Relleno_Densidad decimal(38, 2) NOT NULL
 )
 
 
 -- Sillon
 CREATE TABLE MAUV.Sillon_Medida (
-    Sillon_Medida_Codigo bigint PRIMARY KEY NOT NULL,
+    Sillon_Medida_Codigo bigint PRIMARY KEY IDENTITY(1,1) NOT NULL,
     Sillon_Medida_Alto decimal(18, 2),
     Sillon_Medida_Ancho decimal(18, 2),
     Sillon_Medida_Profundidad decimal(18, 2),
@@ -63,7 +68,6 @@ CREATE TABLE MAUV.SillonXMaterial (
 
 -- 2. Creacion Sucursal, Cliente, Proveedor, Compra, Pedido, Factura, Envio
 CREATE TABLE MAUV.Sucursal (
-    -- Sucursal_Nro bigint PRIMARY KEY IDENTITY(1,1) NOT NULL, --> Se cambia según tabla maestra que trae los valores de las sucursales
     Sucursal_NroSucursal bigint PRIMARY KEY NOT NULL,
     Sucursal_Provincia nvarchar(255),
     Sucursal_Localidad nvarchar(255),
@@ -162,441 +166,420 @@ CREATE TABLE MAUV.Detalle_Compra (
     Detalle_Compra_SubTotal decimal(18,2) NULL
 )
 
--- Insertamos los Materiales válidos en MAUV.Material
-INSERT INTO MAUV.Material (
-    Material_Nombre,
-    Material_Tipo, 
-    Material_Descripcion,
-    Material_Precio
-)
--- Usamos DISTINCT para evitar duplicados
-SELECT DISTINCT
-    Material_Nombre,
-    Material_Tipo, 
-    Material_Descripcion,
-    Material_Precio
-FROM
-    gd_esquema.Maestra
-WHERE
-    Material_Nombre IS NOT NULL;
+GO
 
--- Insertamos las telas válidos en MAUV.Tela>
-INSERT INTO MAUV.Tela (
-    Tela_Nombre,
-    Tela_Color,    
-    Tela_Textura
-)
--- Usamos DISTINCT para evitar duplicados
-SELECT DISTINCT
-    Tela_Nombre,
-    Tela_Color,    
-    Tela_Textura
-FROM
-    gd_esquema.Maestra
-WHERE
-    Tela_Nombre IS NOT NULL;
+------------------------------------------------------
+-- Creacion de Triggers
+------------------------------------------------------
 
--- Insertamos las maderas válidos en MAUV.Madera
-INSERT INTO MAUV.Madera (
-    Madera_Nombre,
-    Madera_Color,
-    Madera_Dureza
-)
--- Usamos DISTINCT para evitar duplicados
-SELECT DISTINCT
-    Madera_Nombre,
-    Madera_Color,
-    Madera_Dureza
-FROM
-    gd_esquema.Maestra
-WHERE
-    -- Validamos que el campo que referencia a Material no sea NULL
-    Madera_Nombre IS NOT NULL;
+-- TODO
 
--- Insertamos los rellenos válidos en MAUV.Relleno
-INSERT INTO MAUV.Relleno (
-    Relleno_Nombre,
-    Relleno_Densidad
-)
+------------------------------------------------------
+-- Migracion de datos desde maestra
+------------------------------------------------------
 
--- Usamos DISTINCT para evitar duplicados
-SELECT DISTINCT
-    Relleno_Nombre,
-    Relleno_Densidad
-FROM
-    gd_esquema.Maestra
-WHERE
-    Relleno_Nombre IS NOT NULL;
+CREATE or ALTER PROCEDURE MAUV.migrar_materiales AS
+BEGIN
+    INSERT INTO MAUV.Material (
+        Material_Nombre,
+        Material_Tipo, 
+        Material_Descripcion,
+        Material_Precio
+    )
+    SELECT DISTINCT
+        Material_Nombre,
+        Material_Tipo, 
+        Material_Descripcion,
+        Material_Precio
+    FROM
+        gd_esquema.Maestra
+    WHERE
+        Material_Nombre IS NOT NULL;
 
--- SILLON
--- Insertamos los sillones válidos en MAUV.Silon_Medida
-INSERT INTO MAUV.Sillon_Medida (
-    Sillon_Medida_Codigo,
-    Sillon_Medida_Alto,
-    Sillon_Medida_Ancho,
-    Sillon_Medida_Precio,
-    Sillon_Medida_Profundidad
-)
--- Usamos DISTINCT para evitar duplicados
-SELECT DISTINCT
-    Sillon_Medida_Codigo,
-    Sillon_Medida_Alto,
-    Sillon_Medida_Ancho,
-    Sillon_Medida_Precio,
-    Sillon_Medida_Profundidad
-FROM
-    gd_esquema.Maestra
-WHERE
-    Sillon_Medida_Codigo IS NOT NULL;
+    INSERT INTO MAUV.Tela (
+        Tela_Nombre,
+        Tela_Color,    
+        Tela_Textura
+    )
+    SELECT DISTINCT
+        Material_Nombre,
+        Tela_Color,    
+        Tela_Textura
+    FROM
+        gd_esquema.Maestra
+    WHERE
+        Material_Nombre IS NOT NULL AND Tela_Color IS NOT NULL AND Tela_Textura IS NOT NULL;
 
--- Insertamos los sillones modelos válidos en MAUV.Sillon_Modelo
-INSERT INTO MAUV.Sillon_Modelo (
-    Sillon_Modelo_Codigo,
-    Sillon_Modelo,
-    Sillon_Modelo_Descripcion,
-    Sillon_Modelo_Precio
-)
--- Usamos DISTINCT para evitar duplicados
-SELECT DISTINCT
-    Sillon_Modelo_Codigo,
-    Sillon_Modelo,
-    Sillon_Modelo_Descripcion,
-    Sillon_Modelo_Precio
-FROM
-    gd_esquema.Maestra
-WHERE
-    Sillon_Modelo_Codigo IS NOT NULL;
+    INSERT INTO MAUV.Madera (
+        Madera_Nombre,
+        Madera_Color,
+        Madera_Dureza
+    )
+    SELECT DISTINCT
+        Material_Nombre,
+        Madera_Color,
+        Madera_Dureza
+    FROM
+        gd_esquema.Maestra
+    WHERE
+        Material_Nombre IS NOT NULL AND Madera_Color IS NOT NULL AND Madera_Dureza IS NOT NULL;
 
--- Insertamos los sillones válidos en MAUV.Sillon
-INSERT INTO MAUV.Sillon (
-    Sillon_Codigo,
-    Sillon_Modelo,
-    Sillon_Medida
-)
--- Usamos DISTINCT para evitar duplicados
-SELECT DISTINCT
-    Sillon_Codigo,
-    Sillon_Modelo,
-    Sillon_Medida
-FROM
-    gd_esquema.Maestra
-WHERE
-    Sillon_Codigo IS NOT NULL;
+    INSERT INTO MAUV.Relleno (
+        Relleno_Nombre,
+        Relleno_Densidad
+    )
+    SELECT DISTINCT
+        Material_Nombre,
+        Relleno_Densidad
+    FROM
+        gd_esquema.Maestra
+    WHERE
+        Material_Nombre IS NOT NULL AND Relleno_Densidad IS NOT NULL;
+END;
+GO
 
--- Insertamos los sillones x material válidos en MAUV.SillonXMaterial
-INSERT INTO MAUV.SillonXMaterial (
-    Material,
-    Sillon_Codigo
-)
--- Usamos DISTINCT para evitar duplicados
-SELECT DISTINCT
-    Material,
-    Sillon_Codigo
-FROM
-    gd_esquema.Maestra
-WHERE
-    Material IS NOT NULL AND Sillon_Codigo IS NOT NULL;
+CREATE or ALTER PROCEDURE MAUV.migrar_sillones AS
+BEGIN
+    -- Sillones
 
--- Insertamos los sucursales válidas en MAUV.Sucursal
-INSERT INTO MAUV.Sucursal (
-    Sucursal_NroSucursal,
-    Sucursal_Provincia,
-    Sucursal_Localidad,
-    Sucursal_Direccion,
-    Sucursal_Telefono,
-    Sucursal_Mail
-)
--- Usamos DISTINCT para evitar duplicados
-SELECT DISTINCT
-    Sucursal_NroSucursal,
-    Sucursal_Provincia,
-    Sucursal_Localidad,
-    Sucursal_Direccion,
-    Sucursal_Telefono,
-    Sucursal_Mail
-FROM
-    gd_esquema.Maestra
-WHERE
-    Sucursal_NroSucursal IS NOT NULL;
+    -- Temporary table needed as we need to generate `medida_codigo` to connect it to sillon table
+    -- This is because master table does not provide one
+    CREATE TABLE MAUV.sillon_temporal (
+        sillon_codigo bigint,
+        modelo_codigo bigint,
+        modelo_descripcion nvarchar(255),
+        modelo_precio decimal(18,2),
+        medida_codigo bigint IDENTITY(1,1)
+        medida_ancho decimal(18,2),
+        medida_alto decimal(18,2),
+        medida_profundidad decimal(18,2),
+        medida_precio decimal(18,2),
+    )
 
--- Insertamos los clientes validos en MAUV.Cliente
-INSERT INTO MAUV.Cliente(
-    Cliente_Dni,
-    Cliente_Provincia,
-    Cliente_Nombre,
-    Cliente_Apellido,
-    Cliente_Fecha_Nacimiento,
-    Cliente_Mail,
-    Cliente_Direccion,
-    Cliente_Telefono,
-    Cliente_Localidad
-)
--- Usamos distinct para evitar duplicados
-SELECT DISTINCT
-    Cliente_Dni,
-    Cliente_Provincia,
-    Cliente_Nombre,
-    Cliente_Apellido,
-    Cliente_Fecha_Nacimiento,
-    Cliente_Mail,
-    Cliente_Direccion,
-    Cliente_Telefono,
-    Cliente_Localidad
-FROM
-    gd_esquema.Maestra
--- Cada INSERT verifica que el campo (primaria o foranea) no sea nulo
-WHERE Cliente_Dni IS NOT NULL;
+    INSERT INTO MAUV.sillon_temporal (
+        sillon_codigo,
+        modelo_codigo,
+        modelo_descripcion,
+        modelo_precio,
+        medida_ancho,
+        medida_alto,
+        medida_profundidad,
+        medida_precio,
+    ) 
+    SELECT DISTINCT (
+        Sillon_Codigo, 
+        Sillon_Modelo_Codigo, 
+        Sillon_Modelo, 
+        Sillon_Modelo_Descripcion, 
+        Sillon_Medida_Alto, 
+        Sillon_Medida_Ancho,
+        Sillon_Medida_Profundidad
+    )
+    FROM gd_esquema.Maestra;
+    
+    INSERT INTO MAUV.Sillon_Medida (
+        Sillon_Medida_Codigo,
+        Sillon_Medida_Alto,
+        Sillon_Medida_Ancho,
+        Sillon_Medida_Precio,
+        Sillon_Medida_Profundidad
+    )
+    SELECT
+        medida_codigo,
+        medida_alto,
+        medida_ancho,
+        medida_precio,
+        medida_profundidad
+    FROM
+        MAUV.sillon_temporal
+    WHERE
+        medida_codigo IS NOT NULL;
 
--- Insertamos los proveedores válidos en MAUV.Proveedor
-INSERT INTO MAUV.Proveedor (
-    Proveedor_Cuit,
-    Proveedor_Provincia,
-    Proveedor_Localidad,
-    Proveedor_RazonSocial,
-    Proveedor_Direccion,
-    Proveedor_Telefono,
-    Proveedor_Mail
-)
--- Usamos DISTINCT para evitar duplicados
-SELECT DISTINCT
-    Proveedor_Cuit,
-    Proveedor_Provincia,
-    Proveedor_Localidad,
-    Proveedor_RazonSocial,
-    Proveedor_Direccion,
-    Proveedor_Telefono,
-    Proveedor_Mail
-FROM
-    gd_esquema.Maestra
-WHERE
-    Proveedor_Cuit IS NOT NULL;
+    INSERT INTO MAUV.Sillon_Modelo (
+        Sillon_Modelo_Codigo,
+        Sillon_Modelo,
+        Sillon_Modelo_Descripcion,
+        Sillon_Modelo_Precio
+    )
+    SELECT
+        modelo_codigo,
+        modelo,
+        modelo_descripcion,
+        modelo_precio
+    FROM
+        MAUV.sillon_temporal
+    WHERE
+        modelo_codigo IS NOT NULL;
 
--- Insertamos las compras válidos en MAUV.Compra
-INSERT INTO MAUV.Compra (
-    Compra_Numero,
-    Compra_Sucursal,
-    Compra_Proveedor,
-    Compra_Fecha,
-    Compra_Total
-)
--- Usamos DISTINCT para evitar duplicados
-SELECT DISTINCT
-    Compra_Numero,
-    Compra_Sucursal,
-    Compra_Proveedor,
-    Compra_Fecha,
-    Compra_Total
-FROM
-    gd_esquema.Maestra
-WHERE
-    Compra_Numero IS NOT NULL;
+    INSERT INTO MAUV.Sillon (
+        Sillon_Codigo,
+        Sillon_Modelo,
+        Sillon_Medida
+    )
+    SELECT
+        sillon_codigo
+        modelo_codigo,   
+        medida_codigo,
+    FROM
+        MAUV.sillon_temporal
+    WHERE
+        sillon_codigo IS NOT NULL;
 
--- Insertamos los pedidos válidos en MAUV.Pedido
-INSERT INTO MAUV.Pedido (
-    Pedido_Numero,
-    Pedido_Fecha,
-    Pedido_Estado,
-    Pedido_Total,
-    Pedido_Sucursal,
-    Pedido_Cliente
-)
--- Usamos DISTINCT para evitar duplicados
-SELECT DISTINCT
-    Pedido_Numero,
-    Pedido_Fecha,
-    Pedido_Estado,
-    Pedido_Total,
-    Pedido_Sucursal,
-    Pedido_Cliente
-FROM
-    gd_esquema.Maestra
-WHERE
-    Pedido_Numero IS NOT NULL AND Pedido_Sucursal IS NOT NULL AND Pedido_Cliente IS NOT NULL;  
+    INSERT INTO MAUV.SillonXMaterial (
+        Material,
+        Sillon_Codigo
+    )
+    SELECT DISTINCT
+        Material_Nombre,
+        Sillon_Codigo
+    FROM
+        gd_esquema.Maestra
+    WHERE
+        Material_Nombre IS NOT NULL AND Sillon_Codigo IS NOT NULL;
 
--- Insertamos las cancelaciones de pedidos válidos en MAUV.Cancelacion_Pedido
-INSERT INTO MAUV.Cancelacion_Pedido (
-    Cancelacion_Pedido_Numero,
-    Pedido_Cancelacion_Fecha,
-    Pedido_Cancelacion_Motivo
-)
--- Usamos DISTINCT para evitar duplicados
-SELECT DISTINCT
-    Cancelacion_Pedido_Numero,
-    Pedido_Cancelacion_Fecha,
-    Pedido_Cancelacion_Motivo
-FROM
-    gd_esquema.Maestra
-WHERE
-    Cancelacion_Pedido_Numero IS NOT NULL;
+    DROP TABLE MAUV.sillon_temporal
+END;
+GO
 
--- Insertamos las facturas válidos en MAUV.Factura
-INSERT INTO MAUV.Factura (
-    Factura_Numero,
-    Factura_Fecha,
-    Factura_Total,
-    Factura_Cliente,
-    Factura_Sucursal
-)
--- Usamos DISTINCT para evitar duplicados
-SELECT DISTINCT
-    Factura_Numero,
-    Factura_Fecha,
-    Factura_Total,
-    Factura_Cliente,
-    Factura_Sucursal
-FROM
-    gd_esquema.Maestra
-WHERE
-    Factura_Numero IS NOT NULL AND Factura_Cliente IS NOT NULL AND Factura_Sucursal IS NOT NULL;
+CREATE or ALTER PROCEDURE MAUV.migrar_sucursales_clientes_proveedores AS
+BEGIN
+    INSERT INTO MAUV.Sucursal (
+        Sucursal_NroSucursal,
+        Sucursal_Provincia,
+        Sucursal_Localidad,
+        Sucursal_Direccion,
+        Sucursal_Telefono,
+        Sucursal_Mail
+    )
+    SELECT DISTINCT
+        Sucursal_NroSucursal,
+        Sucursal_Provincia,
+        Sucursal_Localidad,
+        Sucursal_Direccion,
+        Sucursal_Telefono,
+        Sucursal_Mail
+    FROM
+        gd_esquema.Maestra
+    WHERE
+        Sucursal_NroSucursal IS NOT NULL;
 
--- Insertamos los envios válidos en MAUV.Envio
-INSERT INTO MAUV.Envio (
-    Envio_Numero,
-    Envio_Factura,
-    Envio_Fecha_Programada,
-    Envio_Fecha,
-    Envio_ImporteTraslado,
-    Envio_ImporteSubida,
-    Envio_Total
-)
--- Usamos DISTINCT para evitar duplicados
-SELECT DISTINCT
-    Envio_Numero,
-    Envio_Factura,
-    Envio_Fecha_Programada,
-    Envio_Fecha,
-    Envio_ImporteTraslado,
-    Envio_ImporteSubida,
-    Envio_Total
-FROM
-    gd_esquema.Maestra
-WHERE
-    Envio_Numero IS NOT NULL AND Envio_Factura IS NOT NULL;
+    INSERT INTO MAUV.Cliente (
+        Cliente_Dni,
+        Cliente_Provincia,
+        Cliente_Nombre,
+        Cliente_Apellido,
+        Cliente_Fecha_Nacimiento,
+        Cliente_Mail,
+        Cliente_Direccion,
+        Cliente_Telefono,
+        Cliente_Localidad
+    )
+    SELECT DISTINCT
+        Cliente_Dni,
+        Cliente_Provincia,
+        Cliente_Nombre,
+        Cliente_Apellido,
+        Cliente_Fecha_Nacimiento,
+        Cliente_Mail,
+        Cliente_Direccion,
+        Cliente_Telefono,
+        Cliente_Localidad
+    FROM
+        gd_esquema.Maestra
+    WHERE Cliente_Dni IS NOT NULL;
 
--- Insertamos los detalles de pedidos válidos en MAUV.Detalle_Pedido
-INSERT INTO MAUV.Detalle_Pedido (
-    Detalle_Pedido_Numero,
-    Detalle_Pedido_Sillon,
-    Detalle_Pedido_Cantidad,
-    Detalle_Pedido_Precio,
-    Detalle_Pedido_Subtotal
-)
--- Usamos DISTINCT para evitar duplicados
-SELECT DISTINCT
-    Detalle_Pedido_Numero,
-    Detalle_Pedido_Sillon,
-    Detalle_Pedido_Cantidad,
-    Detalle_Pedido_Precio,
-    Detalle_Pedido_Subtotal
-FROM
-    gd_esquema.Maestra
-WHERE
-    Detalle_Pedido_Numero IS NOT NULL AND Detalle_Pedido_Sillon IS NOT NULL AND Detalle_Pedido_Subtotal IS NOT NULL;
+    INSERT INTO MAUV.Proveedor (
+        Proveedor_Cuit,
+        Proveedor_Provincia,
+        Proveedor_Localidad,
+        Proveedor_RazonSocial,
+        Proveedor_Direccion,
+        Proveedor_Telefono,
+        Proveedor_Mail
+    )
+    SELECT DISTINCT
+        Proveedor_Cuit,
+        Proveedor_Provincia,
+        Proveedor_Localidad,
+        Proveedor_RazonSocial,
+        Proveedor_Direccion,
+        Proveedor_Telefono,
+        Proveedor_Mail
+    FROM
+        gd_esquema.Maestra
+    WHERE
+        Proveedor_Cuit IS NOT NULL;
+END;
+GO
 
--- Insertamos los detalles de factuars válidos en MAUV.Detalle_Factura
-INSERT INTO MAUV.Detalle_Factura (
-    Detalle_Factura_Numero,
-    Detalle_Factura_DetPedido,
-    Detalle_Factura_Precio,
-    Detalle_Factura_Cantidad,
-    Detalle_Factura_Subtotal
-)
 
--- Usamos DISTINCT para evitar duplicados
-SELECT DISTINCT
-    Detalle_Factura_Numero,
-    Detalle_Factura_DetPedido,
-    Detalle_Factura_Precio,
-    Detalle_Factura_Cantidad,
-    Detalle_Factura_Subtotal
-FROM
-    gd_esquema.Maestra
-WHERE
-    Detalle_Factura_Numero IS NOT NULL AND Detalle_Factura_DetPedido IS NOT NULL;
+CREATE or ALTER PROCEDURE MAUV.migrar_compras AS
+    INSERT INTO MAUV.Compra (
+        Compra_Numero,
+        Compra_Sucursal,
+        Compra_Proveedor,
+        Compra_Fecha,
+        Compra_Total
+    )
+    SELECT DISTINCT
+        Compra_Numero,
+        Sucursal_NroSucursal,
+        Proveedor_Cuit,
+        Compra_Fecha,
+        Compra_Total
+    FROM
+        gd_esquema.Maestra
+    WHERE
+        Compra_Numero IS NOT NULL AND Sucursal_NroSucursal IS NOT NULL;
+BEGIN
+END;
+GO
 
--- Insertamos los detalles de compras válidos en MAUV.Detalle_Compra
-INSERT INTO MAUV.Detalle_Compra (
-    Detalle_Compra_Numero,
-    Detalle_Compra_Material,
-    Detalle_Compra_Precio,
-    Detalle_Compra_Cantidad,
-    Detalle_Compra_SubTotal
-)
--- Usamos DISTINCT para evitar duplicados
-SELECT DISTINCT
-    Detalle_Compra_Numero,
-    Detalle_Compra_Material,
-    Detalle_Compra_Precio,
-    Detalle_Compra_Cantidad,
-    Detalle_Compra_SubTotal
-FROM
-    gd_esquema.Maestra
-WHERE
-    Detalle_Compra_Numero IS NOT NULL AND Detalle_Compra_Material IS NOT NULL;
+CREATE or ALTER PROCEDURE MAUV.migrar_pedidos AS
+BEGIN
+    INSERT INTO MAUV.Pedido (
+        Pedido_Numero,
+        Pedido_Fecha,
+        Pedido_Estado,
+        Pedido_Total,
+        Pedido_Sucursal,
+        Pedido_Cliente
+    )
+    SELECT DISTINCT
+        Pedido_Numero,
+        Pedido_Fecha,
+        Pedido_Estado,
+        Pedido_Total,
+        Sucursal_NroSucursal,
+        Cliente_Dni
+    FROM
+        gd_esquema.Maestra
+    WHERE
+        Pedido_Numero IS NOT NULL AND Sucursal_NroSucursal IS NOT NULL AND Cliente_Dni IS NOT NULL;  
 
-PRINT '---------------------------------------------------------------';
-PRINT 'Resumen: registros NO insertables por tener PK o FK en NULL en Maestra';
-PRINT '---------------------------------------------------------------';
+    INSERT INTO MAUV.Cancelacion_Pedido (
+        Cancelacion_Pedido_Numero,
+        Pedido_Cancelacion_Fecha,
+        Pedido_Cancelacion_Motivo
+    )
+    SELECT DISTINCT
+        Pedido_Numero,
+        Pedido_Cancelacion_Fecha,
+        Pedido_Cancelacion_Motivo
+    FROM
+        gd_esquema.Maestra
+    WHERE
+        Pedido_Numero IS NOT NULL AND Pedido_Cancelacion_Motivo IS NOT NULL AND Pedido_Cancelacion_Motivo IS NOT NULL;
+END;
+GO
 
--- PKs
-SELECT COUNT(*) AS [Clientes_sin_DNI] FROM gd_esquema.Maestra WHERE Cliente_Dni IS NULL;
-SELECT COUNT(*) AS [Proveedores_sin_CUIT] FROM gd_esquema.Maestra WHERE Proveedor_Cuit IS NULL;
-SELECT COUNT(*) AS [Sucursales_sin_NroSucursal] FROM gd_esquema.Maestra WHERE Sucursal_NroSucursal IS NULL;
-SELECT COUNT(*) AS [Materiales_sin_Nombre] FROM gd_esquema.Maestra WHERE Material_Nombre IS NULL;
-SELECT COUNT(*) AS [Sillon_Modelo_sin_Codigo] FROM gd_esquema.Maestra WHERE Sillon_Modelo_Codigo IS NULL;
-SELECT COUNT(*) AS [Sillon_Medida_sin_Codigo] FROM gd_esquema.Maestra WHERE Sillon_Medida_Codigo IS NULL;
-SELECT COUNT(*) AS [Sillones_sin_Codigo] FROM gd_esquema.Maestra WHERE Sillon_Codigo IS NULL;
-SELECT COUNT(*) AS [Pedidos_sin_Numero] FROM gd_esquema.Maestra WHERE Pedido_Numero IS NULL;
-SELECT COUNT(*) AS [Facturas_sin_Numero] FROM gd_esquema.Maestra WHERE Factura_Numero IS NULL;
-SELECT COUNT(*) AS [Envios_sin_Numero] FROM gd_esquema.Maestra WHERE Envio_Numero IS NULL;
-SELECT COUNT(*) AS [Compras_sin_Numero] FROM gd_esquema.Maestra WHERE Compra_Numero IS NULL;
-SELECT COUNT(*) AS [Detalle_Compra_sin_Numero] FROM gd_esquema.Maestra WHERE Detalle_Compra_Numero IS NULL;
-SELECT COUNT(*) AS [Detalle_Pedido_sin_Numero] FROM gd_esquema.Maestra WHERE Detalle_Pedido_Numero IS NULL;
-SELECT COUNT(*) AS [Detalle_Factura_sin_Numero] FROM gd_esquema.Maestra WHERE Detalle_Factura_Numero IS NULL;
+CREATE or ALTER PROCEDURE MAUV.migrar_facturas_envios AS
+BEGIN
+    INSERT INTO MAUV.Factura (
+        Factura_Numero,
+        Factura_Fecha,
+        Factura_Total,
+        Factura_Cliente,
+        Factura_Sucursal
+    )
+    SELECT DISTINCT
+        Factura_Numero,
+        Factura_Fecha,
+        Factura_Total,
+        Cliente_Dni,
+        Sucursal_NroSucursal
+    FROM
+        gd_esquema.Maestra
+    WHERE
+        Factura_Numero IS NOT NULL AND Cliente_Dni IS NOT NULL AND Sucursal_NroSucursal IS NOT NULL;
 
--- FKs
-SELECT COUNT(*) AS [Rellenos_sin_Material] FROM gd_esquema.Maestra WHERE Relleno_Nombre IS NULL;
-SELECT COUNT(*) AS [Telas_sin_Material] FROM gd_esquema.Maestra WHERE Tela_Nombre IS NULL;
-SELECT COUNT(*) AS [Maderas_sin_Material] FROM gd_esquema.Maestra WHERE Madera_Nombre IS NULL;
-SELECT COUNT(*) AS [Sillon_sin_Modelo] FROM gd_esquema.Maestra WHERE Sillon_Modelo IS NULL;
-SELECT COUNT(*) AS [Sillon_sin_Medida] FROM gd_esquema.Maestra WHERE Sillon_Medida IS NULL;
-SELECT COUNT(*) AS [SillonXMaterial_sin_Sillon] FROM gd_esquema.Maestra WHERE Sillon_Codigo IS NULL;
-SELECT COUNT(*) AS [SillonXMaterial_sin_Material] FROM gd_esquema.Maestra WHERE Material IS NULL;
-SELECT COUNT(*) AS [Compra_sin_Sucursal] FROM gd_esquema.Maestra WHERE Compra_Sucursal IS NULL;
-SELECT COUNT(*) AS [Compra_sin_Proveedor] FROM gd_esquema.Maestra WHERE Compra_Proveedor IS NULL;
-SELECT COUNT(*) AS [Pedido_sin_Sucursal] FROM gd_esquema.Maestra WHERE Pedido_Sucursal IS NULL;
-SELECT COUNT(*) AS [Pedido_sin_Cliente] FROM gd_esquema.Maestra WHERE Pedido_Cliente IS NULL;
-SELECT COUNT(*) AS [Cancelacion_sin_Pedido] FROM gd_esquema.Maestra WHERE Cancelacion_Pedido_Numero IS NULL;
-SELECT COUNT(*) AS [Factura_sin_Cliente] FROM gd_esquema.Maestra WHERE Factura_Cliente IS NULL;
-SELECT COUNT(*) AS [Factura_sin_Sucursal] FROM gd_esquema.Maestra WHERE Factura_Sucursal IS NULL;
-SELECT COUNT(*) AS [Envio_sin_Factura] FROM gd_esquema.Maestra WHERE Envio_Factura IS NULL;
-SELECT COUNT(*) AS [DetPedido_sin_Sillon] FROM gd_esquema.Maestra WHERE Detalle_Pedido_Sillon IS NULL;
-SELECT COUNT(*) AS [DetFactura_sin_Pedido] FROM gd_esquema.Maestra WHERE Detalle_Factura_DetPedido IS NULL;
-SELECT COUNT(*) AS [DetFactura_sin_Factura] FROM gd_esquema.Maestra WHERE Detalle_Factura_Numero IS NULL;
-SELECT COUNT(*) AS [DetCompra_sin_Material] FROM gd_esquema.Maestra WHERE Detalle_Compra_Material IS NULL;
-SELECT COUNT(*) AS [DetCompra_sin_Compra] FROM gd_esquema.Maestra WHERE Detalle_Compra_Numero IS NULL;
+    INSERT INTO MAUV.Envio (
+        Envio_Numero,
+        Envio_Factura,
+        Envio_Fecha_Programada,
+        Envio_Fecha,
+        Envio_ImporteTraslado,
+        Envio_ImporteSubida,
+        Envio_Total
+    )
+    SELECT DISTINCT
+        Envio_Numero,
+        Factura_Numero,
+        Envio_Fecha_Programada,
+        Envio_Fecha,
+        Envio_ImporteTraslado,
+        Envio_ImporteSubida,
+        Envio_Total
+    FROM
+        gd_esquema.Maestra
+    WHERE
+        Envio_Numero IS NOT NULL AND Factura_Numero IS NOT NULL;
+END;
+GO
 
-PRINT '---------------------------------------------------------------';
-PRINT 'Resumen final: cantidad de registros insertados en cada tabla MAUV';
-PRINT '---------------------------------------------------------------';
+CREATE or ALTER PROCEDURE MAUV.migrar_detalles AS
+BEGIN
+    INSERT INTO MAUV.Detalle_Pedido (
+        Detalle_Pedido_Numero,
+        Detalle_Pedido_Sillon,
+        Detalle_Pedido_Cantidad,
+        Detalle_Pedido_Precio,
+        Detalle_Pedido_Subtotal
+    )
+    SELECT DISTINCT
+        Pedido_Numero,
+        Sillon_Codigo,
+        Detalle_Pedido_Cantidad,
+        Detalle_Pedido_Precio,
+        Detalle_Pedido_Subtotal
+    FROM
+        gd_esquema.Maestra
+    WHERE
+        Pedido_Numero IS NOT NULL AND Sillon_Codigo;
 
-SELECT COUNT(*) AS [Clientes] FROM MAUV.Cliente;
-SELECT COUNT(*) AS [Proveedores] FROM MAUV.Proveedor;
-SELECT COUNT(*) AS [Sucursales] FROM MAUV.Sucursal;
-SELECT COUNT(*) AS [Materiales] FROM MAUV.Material;
-SELECT COUNT(*) AS [Telas] FROM MAUV.Tela;
-SELECT COUNT(*) AS [Maderas] FROM MAUV.Madera;
-SELECT COUNT(*) AS [Rellenos] FROM MAUV.Relleno;
-SELECT COUNT(*) AS [Sillones] FROM MAUV.Sillon;
-SELECT COUNT(*) AS [Sillon_Modelo] FROM MAUV.Sillon_Modelo;
-SELECT COUNT(*) AS [Sillon_Medida] FROM MAUV.Sillon_Medida;
-SELECT COUNT(*) AS [SillonXMaterial] FROM MAUV.SillonXMaterial;
-SELECT COUNT(*) AS [Compras] FROM MAUV.Compra;
-SELECT COUNT(*) AS [Pedidos] FROM MAUV.Pedido;
-SELECT COUNT(*) AS [Cancelaciones_Pedido] FROM MAUV.Cancelacion_Pedido;
-SELECT COUNT(*) AS [Facturas] FROM MAUV.Factura;
-SELECT COUNT(*) AS [Envios] FROM MAUV.Envio;
-SELECT COUNT(*) AS [Detalle_Compra] FROM MAUV.Detalle_Compra;
-SELECT COUNT(*) AS [Detalle_Pedido] FROM MAUV.Detalle_Pedido;
-SELECT COUNT(*) AS [Detalle_Factura] FROM MAUV.Detalle_Factura;
+    INSERT INTO MAUV.Detalle_Factura (
+        Detalle_Factura_Numero,
+        Detalle_Factura_DetPedido,
+        Detalle_Factura_Precio,
+        Detalle_Factura_Cantidad,
+        Detalle_Factura_Subtotal
+    )
 
+    SELECT DISTINCT
+        Factura_Numero,
+        Pedido_Numero,
+        Detalle_Factura_Precio,
+        Detalle_Factura_Cantidad,
+        Detalle_Factura_Subtotal
+    FROM
+        gd_esquema.Maestra
+    WHERE
+        Factura_Numero IS NOT NULL AND Detalle_Factura_DetPedido IS NOT NULL;
+
+    INSERT INTO MAUV.Detalle_Compra (
+        Detalle_Compra_Numero,
+        Detalle_Compra_Material,
+        Detalle_Compra_Precio,
+        Detalle_Compra_Cantidad,
+        Detalle_Compra_SubTotal
+    )
+    SELECT DISTINCT
+        Compra_Numero,
+        Material_Nombre,
+        Detalle_Compra_Precio,
+        Detalle_Compra_Cantidad,
+        Detalle_Compra_SubTotal
+    FROM
+        gd_esquema.Maestra
+    WHERE
+        Compra_Numero IS NOT NULL AND Material_Nombre IS NOT NULL;
+END;
+GO
+
+EXEC MAUV.migrar_materiales;
+EXEC MAUV.migrar_sillones;
+EXEC MAUV.migrar_sucursales_clientes_proveedores;
+EXEC MAUV.migrar_compras;
+EXEC MAUV.migrar_pedidos;
+EXEC MAUV.migrar_facturas_envios;
+EXEC MAUV.migrar_detalles;
