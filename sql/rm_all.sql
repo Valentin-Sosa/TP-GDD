@@ -43,5 +43,15 @@ DROP TABLE [MAUV].[Relleno]
 DROP TABLE [MAUV].[Material]
 GO
 
+DROP PROCEDURE MAUV.crear_tablas;
+DROP PROCEDURE MAUV.migrar_materiales;
+DROP PROCEDURE MAUV.migrar_sillones;
+DROP PROCEDURE MAUV.migrar_sucursales_clientes_proveedores;
+DROP PROCEDURE MAUV.migrar_compras;
+DROP PROCEDURE MAUV.migrar_pedidos;
+DROP PROCEDURE MAUV.migrar_facturas_envios;
+DROP PROCEDURE MAUV.migrar_detalles;
+GO
+
 DROP SCHEMA [MAUV]
 GO
