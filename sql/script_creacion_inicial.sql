@@ -242,64 +242,72 @@ BEGIN
 END;
 GO
 
-EXEC MAUV.crear_tablas;
-GO
-
 ------------------------------------------------------
 -- Creacion de Triggers
 ------------------------------------------------------
--- trigger para que una cancelacion de pedigo no haga referencia a un pedido creado en fechas posterior
-CREATE OR ALTER TRIGGER trg_cancelacion_pedido_fecha_valida ON MAUV.Cancelacion_Pedido
-INSTEAD OF INSERT AS
+
+----
+-- Note: we are wrapping the trigger creation in EXEC as sql does not allow to create triggers inside procedures
+----
+
+CREATE or ALTER PROCEDURE MAUV.crear_triggers AS
 BEGIN
-    IF EXISTS (
-        SELECT 1
-        FROM inserted i
-        JOIN MAUV.Pedido p ON i.Cancelacion_Pedido_Numero = p.Pedido_Numero
-        WHERE p.Pedido_Fecha > i.Pedido_Cancelacion_Fecha
-    )
+    -- trigger para que una cancelacion de pedigo no haga referencia a un pedido creado en fechas posterior
+    EXEC('
+    CREATE OR ALTER TRIGGER trg_cancelacion_pedido_fecha_valida ON MAUV.Cancelacion_Pedido
+    INSTEAD OF INSERT AS
     BEGIN
-        RAISERROR ('No se puede cancelar un pedido cuya fecha está en el futuro.', 16, 1)
-        ROLLBACK
-        RETURN
-    END
+        IF EXISTS (
+            SELECT 1
+            FROM inserted i
+            JOIN MAUV.Pedido p ON i.Cancelacion_Pedido_Numero = p.Pedido_Numero
+            WHERE p.Pedido_Fecha > i.Pedido_Cancelacion_Fecha
+        )
+        BEGIN
+            RAISERROR (''No se puede cancelar un pedido cuya fecha está en el futuro.'', 16, 1);
+            ROLLBACK;
+            RETURN;
+        END
+    END;
+    ');
+
+    -- trigger para que no sea posible modificar un pedido con fecha pasada
+    EXEC('
+    CREATE OR ALTER TRIGGER trg_pedido_no_modificar_fecha_pasada ON MAUV.Pedido
+    AFTER UPDATE AS
+    BEGIN
+        IF EXISTS (
+            SELECT 1
+            FROM inserted i
+            JOIN deleted d ON i.Pedido_Numero = d.Pedido_Numero
+            WHERE i.Pedido_Fecha < d.Pedido_Fecha
+        )
+        BEGIN
+            RAISERROR (''No se puede modificar la fecha del pedido a una anterior.'', 16, 1);
+            ROLLBACK;
+        END
+    END;
+    ');
+
+    -- trigger para que no sea posible modificar una factura con fecha pasada
+    EXEC('
+    CREATE OR ALTER TRIGGER trg_factura_no_modificar_fecha_pasada ON MAUV.Factura
+    AFTER UPDATE AS
+    BEGIN
+        IF EXISTS (
+            SELECT 1
+            FROM inserted i
+            JOIN deleted d ON i.Factura_Numero = d.Factura_Numero
+            WHERE i.Factura_Fecha < d.Factura_Fecha
+        )
+        BEGIN
+            RAISERROR (''No se puede modificar la fecha de una factura anterior.'', 16, 1);
+            ROLLBACK;
+        END
+    END;
+    ');
 END;
 GO
-
--- trigger para que no sea posible modificar un pedido con fecha pasada
-CREATE OR ALTER TRIGGER trg_pedido_no_modificar_fecha_pasada ON MAUV.Pedido
-AFTER UPDATE AS
-BEGIN
-    IF EXISTS (
-        SELECT 1
-        FROM inserted i
-        JOIN deleted d ON i.Pedido_Numero = d.Pedido_Numero
-        WHERE i.Pedido_Fecha < d.Pedido_Fecha
-    )
-    BEGIN
-        RAISERROR ('No se puede modificar la fecha del pedido a una anterior.', 16, 1)
-        ROLLBACK
-    END
-END;
-GO
-
--- trigger para que no sea posible modificar una factura con fecha pasada
-CREATE OR ALTER TRIGGER trg_factura_no_modificar_fecha_pasada ON MAUV.Factura
-AFTER UPDATE AS
-BEGIN
-    IF EXISTS (
-        SELECT 1
-        FROM inserted i
-        JOIN deleted d ON i.Factura_Numero = d.Factura_Numero
-        WHERE i.Factura_Fecha < d.Factura_Fecha
-    )
-    BEGIN
-        RAISERROR ('No se puede modificar la fecha de una factura anterior.', 16, 1)
-        ROLLBACK
-    END
-END;
-GO
-
 
 
 ------------------------------------------------------
@@ -755,6 +763,8 @@ GO
 
 BEGIN TRY
     BEGIN TRANSACTION;
+        EXEC MAUV.crear_tablas;
+        EXEC MAUV.crear_triggers;
         EXEC MAUV.migrar_materiales;
         EXEC MAUV.migrar_sillones;
         EXEC MAUV.migrar_sucursales_clientes_proveedores;
