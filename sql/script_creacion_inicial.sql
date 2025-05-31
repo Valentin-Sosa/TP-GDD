@@ -96,7 +96,7 @@ CREATE TABLE MAUV.Proveedor (
 
 CREATE TABLE MAUV.Compra (
     Compra_Numero decimal(18,0) PRIMARY KEY NOT NULL,
-    Compra_Sucursal bigint FOREIGN KEY REFERENCES MAUV.Sucursal(Sucursal_Nro) NOT NULL,
+    Compra_Sucursal bigint FOREIGN KEY REFERENCES MAUV.Sucursal(Sucursal_NroSucursal) NOT NULL,
     Compra_Proveedor nvarchar(255) FOREIGN KEY REFERENCES MAUV.Proveedor(Proveedor_Cuit) NOT NULL,
     Compra_Fecha datetime2(6),
     Compra_Total decimal(18,2)
@@ -107,7 +107,7 @@ CREATE TABLE MAUV.Pedido (
     Pedido_Fecha datetime2(6),
     Pedido_Estado nvarchar(255),
     Pedido_Total decimal(18,2),
-    Pedido_Sucursal bigint FOREIGN KEY REFERENCES MAUV.Sucursal(Sucursal_Nro),
+    Pedido_Sucursal bigint FOREIGN KEY REFERENCES MAUV.Sucursal(Sucursal_NroSucursal),
     Pedido_Cliente bigint FOREIGN KEY REFERENCES MAUV.Cliente(Cliente_Dni)
 )
 
@@ -122,7 +122,7 @@ CREATE TABLE MAUV.Factura (
     Factura_Fecha datetime2(6) NULL,
     Factura_Total decimal(38,2) NULL,
     Factura_Cliente bigint FOREIGN KEY REFERENCES MAUV.Cliente(Cliente_Dni) NOT NULL,
-    Factura_Sucursal bigint FOREIGN KEY REFERENCES MAUV.Sucursal(Sucursal_Nro) NOT NULL
+    Factura_Sucursal bigint FOREIGN KEY REFERENCES MAUV.Sucursal(Sucursal_NroSucursal) NOT NULL
 )
 
 CREATE TABLE MAUV.Envio (
