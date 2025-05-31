@@ -20,6 +20,10 @@ BEGIN
         Material_Precio decimal(38, 2) NOT NULL
     )
 
+    -- Make sure precio is higher than zero
+    ALTER TABLE MAUV.Material ADD CONSTRAINT material_precio_no_negativo
+    CHECK (Material_Precio >= 0)
+
     CREATE TABLE MAUV.Tela (
         Tela_Nombre nvarchar(255) FOREIGN KEY REFERENCES MAUV.Material(Material_Nombre) NOT NULL,
         Tela_Color nvarchar(255) NOT NULL,
@@ -45,8 +49,11 @@ BEGIN
         Sillon_Medida_Ancho decimal(18, 2),
         Sillon_Medida_Profundidad decimal(18, 2),
         Sillon_Medida_Precio decimal(18, 2)
-        
     )
+
+    -- Make sure precio is higher than zero
+    ALTER TABLE MAUV.Sillon_Medida ADD CONSTRAINT sillon_medida_precio_no_negativo
+    CHECK (Sillon_Medida_Precio >= 0)
 
     CREATE TABLE MAUV.Sillon_Modelo (
         Sillon_Modelo_Codigo bigint PRIMARY KEY NOT NULL,
@@ -55,6 +62,9 @@ BEGIN
         Sillon_Modelo_Precio decimal(18, 2)
     )
 
+    -- Make sure precio is higher than zero
+    ALTER TABLE MAUV.Sillon_Modelo ADD CONSTRAINT sillon_modelo_precio_no_negativo
+    CHECK (Sillon_Modelo_Precio >= 0)
 
     CREATE TABLE MAUV.Sillon(
         Sillon_Codigo bigint PRIMARY KEY NOT NULL,
@@ -89,6 +99,17 @@ BEGIN
         Cliente_Localidad nvarchar(255)
     )
 
+    -- Make sure client is older than 18
+    ALTER TABLE MAUV.Cliente ADD CONSTRAINT cliente_mayor_edad
+    CHECK (
+        Cliente_Fecha_Nacimiento IS NULL 
+        DATEDIFF(YEAR, Cliente_Fecha_Nacimiento, GETDATE()) >= 18
+    );
+
+    -- Make sure client DNI isn't negative
+    ALTER TABLE MAUV.Cliente ADD CONSTRAINT cliente_dni_positivo
+    CHECK (Cliente_Dni > 0);
+
     CREATE TABLE MAUV.Proveedor (
         Proveedor_Cuit nvarchar(255) PRIMARY KEY NOT NULL,
         Proveedor_Provincia nvarchar(255),
@@ -116,6 +137,10 @@ BEGIN
         Pedido_Cliente bigint FOREIGN KEY REFERENCES MAUV.Cliente(Cliente_Dni)
     )
 
+    -- Make sure total isn't negative
+    ALTER TABLE MAUV.Pedido ADD CONSTRAINT pedido_total_positivo
+    CHECK (Pedido_Total > 0);
+
     CREATE TABLE MAUV.Cancelacion_Pedido (
         Cancelacion_Pedido_Numero decimal(18,0) FOREIGN KEY REFERENCES MAUV.Pedido(Pedido_Numero) NOT NULL,
         Pedido_Cancelacion_Fecha datetime2(6),
@@ -140,6 +165,17 @@ BEGIN
         Envio_Total decimal(18,2)
     )
 
+    -- Make sure Envio_ImporteTraslado is non-negative
+    ALTER TABLE MAUV.Envio ADD CONSTRAINT envio_importe_traslado_no_negativo
+    CHECK (Envio_ImporteTraslado >= 0);
+
+    -- Make sure Envio_ImporteSubida is non-negative
+    ALTER TABLE MAUV.Envio ADD CONSTRAINT envio_importe_subida_no_negativo
+    CHECK (Envio_ImporteSubida >= 0);
+
+    -- Make sure Envio_Total is non-negative
+    ALTER TABLE MAUV.Envio ADD CONSTRAINT envio_total_no_negativo
+    CHECK (Envio_Total >= 0);
 
     -- 3. Creacion detalles Pedido, Factura, Compra
     CREATE TABLE MAUV.Detalle_Pedido (
@@ -151,6 +187,18 @@ BEGIN
         Detalle_Pedido_Subtotal decimal(18,2)
     )
 
+    -- Make sure Detalle_Pedido_Cantidad is positive
+    ALTER TABLE MAUV.Detalle_Pedido ADD CONSTRAINT detalle_pedido_cantidad_positiva 
+    CHECK (Detalle_Pedido_Cantidad > 0);
+
+    -- Make sure Detalle_Pedido_Precio is non-negative
+    ALTER TABLE MAUV.Detalle_Pedido ADD CONSTRAINT detalle_pedido_precio_no_negativo 
+    CHECK (OR Detalle_Pedido_Precio >= 0);
+
+    -- Make sure Detalle_Pedido_Subtotal is non-negative
+    ALTER TABLE MAUV.Detalle_Pedido ADD CONSTRAINT detalle_pedido_subtotal_no_negativo 
+    CHECK (Detalle_Pedido_Subtotal >= 0);
+
     CREATE TABLE MAUV.Detalle_Factura (
         Detalle_Factura_Codigo bigint PRIMARY KEY IDENTITY(1,1) NOT NULL,
         Detalle_Factura_Numero bigint FOREIGN KEY REFERENCES MAUV.Factura(Factura_Numero) NOT NULL,
@@ -160,6 +208,19 @@ BEGIN
         Detalle_Factura_Subtotal decimal(18, 2)
     )
 
+    -- Make sure Detalle_Factura_Cantidad is positive
+    ALTER TABLE MAUV.Detalle_Factura ADD CONSTRAINT detalle_factura_cantidad_positiva 
+    CHECK (Detalle_Factura_Cantidad > 0);
+
+    -- Make sure Detalle_Factura_Precio is non-negative
+    ALTER TABLE MAUV.Detalle_Factura ADD CONSTRAINT detalle_factura_precio_no_negativo 
+    CHECK (Detalle_Factura_Precio >= 0);
+
+    -- Make sure Detalle_Factura_Subtotal is non-negative
+    ALTER TABLE MAUV.Detalle_Factura ADD CONSTRAINT detalle_factura_subtotal_no_negativo 
+    CHECK (Detalle_Factura_Subtotal >= 0);
+
+
     CREATE TABLE MAUV.Detalle_Compra (
         Detalle_Compra_Numero decimal(18,0) FOREIGN KEY REFERENCES MAUV.Compra(Compra_Numero) NOT NULL,
         Detalle_Compra_Material nvarchar(255) FOREIGN KEY REFERENCES MAUV.Material(Material_Nombre) NOT NULL,
@@ -167,6 +228,18 @@ BEGIN
         Detalle_Compra_Cantidad decimal(18,0) NULL,
         Detalle_Compra_SubTotal decimal(18,2) NULL
     )
+
+    -- Make sure Detalle_Compra_Precio is non-negative
+    ALTER TABLE MAUV.Detalle_Compra ADD CONSTRAINT detalle_compra_precio_no_negativo 
+    CHECK (Detalle_Compra_Precio >= 0);
+
+    -- Make sure Detalle_Compra_Cantidad is positive
+    ALTER TABLE MAUV.Detalle_Compra ADD CONSTRAINT detalle_compra_cantidad_positiva 
+    CHECK (Detalle_Compra_Cantidad > 0);
+
+    -- Make sure Detalle_Compra_SubTotal is non-negative
+    ALTER TABLE MAUV.Detalle_Compra ADD CONSTRAINT detalle_compra_subtotal_no_negativo 
+    CHECK (Detalle_Compra_SubTotal >= 0);
 END;
 GO
 
