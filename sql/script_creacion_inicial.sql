@@ -20,7 +20,7 @@ BEGIN
         Material_Precio decimal(38, 2) NOT NULL
     )
 
-    -- Make sure precio is higher than zero
+    -- Nos fijamos que el precio sea mayor a cero
     ALTER TABLE MAUV.Material ADD CONSTRAINT material_precio_no_negativo
     CHECK (Material_Precio >= 0)
 
@@ -51,7 +51,7 @@ BEGIN
         Sillon_Medida_Precio decimal(18, 2)
     )
 
-    -- Make sure precio is higher than zero
+    -- Nos fijamos que el precio sea mayor a cero
     ALTER TABLE MAUV.Sillon_Medida ADD CONSTRAINT sillon_medida_precio_no_negativo
     CHECK (Sillon_Medida_Precio >= 0)
 
@@ -62,7 +62,7 @@ BEGIN
         Sillon_Modelo_Precio decimal(18, 2)
     )
 
-    -- Make sure precio is higher than zero
+    -- Nos fijamos que el precio sea mayor a cero
     ALTER TABLE MAUV.Sillon_Modelo ADD CONSTRAINT sillon_modelo_precio_no_negativo
     CHECK (Sillon_Modelo_Precio >= 0)
 
@@ -78,6 +78,7 @@ BEGIN
     )
 
     -- 2. Creacion Sucursal, Cliente, Proveedor, Compra, Pedido, Factura, Envio
+
     CREATE TABLE MAUV.Sucursal (
         Sucursal_NroSucursal bigint PRIMARY KEY NOT NULL,
         Sucursal_Provincia nvarchar(255),
@@ -99,13 +100,13 @@ BEGIN
         Cliente_Localidad nvarchar(255)
     )
 
-    -- Make sure client is older than 18
+    -- Aseguramos que el cliente es mayor de 18 años
     ALTER TABLE MAUV.Cliente ADD CONSTRAINT cliente_mayor_edad
     CHECK (
         DATEDIFF(YEAR, Cliente_Fecha_Nacimiento, GETDATE()) >= 18
     );
 
-    -- Make sure client DNI isn't negative
+    -- Chequeamos que el DNI sea positivo
     ALTER TABLE MAUV.Cliente ADD CONSTRAINT cliente_dni_positivo
     CHECK (Cliente_Dni > 0);
 
@@ -136,7 +137,7 @@ BEGIN
         Pedido_Cliente bigint FOREIGN KEY REFERENCES MAUV.Cliente(Cliente_Dni)
     )
 
-    -- Make sure total isn't negative
+    -- Aseguramos que el total sea positivo
     ALTER TABLE MAUV.Pedido ADD CONSTRAINT pedido_total_positivo
     CHECK (Pedido_Total > 0);
 
@@ -164,15 +165,15 @@ BEGIN
         Envio_Total decimal(18,2)
     )
 
-    -- Make sure Envio_ImporteTraslado is non-negative
+    -- Chequeamos que Envio_ImporteTraslado no sea negativo
     ALTER TABLE MAUV.Envio ADD CONSTRAINT envio_importe_traslado_no_negativo
     CHECK (Envio_ImporteTraslado >= 0);
 
-    -- Make sure Envio_ImporteSubida is non-negative
+    -- Chequeamos que Envio_ImporteSubida no sea negativo
     ALTER TABLE MAUV.Envio ADD CONSTRAINT envio_importe_subida_no_negativo
     CHECK (Envio_ImporteSubida >= 0);
 
-    -- Make sure Envio_Total is non-negative
+    -- Chequeamos que Envio_Total no sea negativo
     ALTER TABLE MAUV.Envio ADD CONSTRAINT envio_total_no_negativo
     CHECK (Envio_Total >= 0);
 
@@ -186,15 +187,15 @@ BEGIN
         Detalle_Pedido_Subtotal decimal(18,2)
     )
 
-    -- Make sure Detalle_Pedido_Cantidad is positive
+    -- Revisamos que Detalle_Pedido_Cantidad sea positivo
     ALTER TABLE MAUV.Detalle_Pedido ADD CONSTRAINT detalle_pedido_cantidad_positiva 
     CHECK (Detalle_Pedido_Cantidad > 0);
 
-    -- Make sure Detalle_Pedido_Precio is non-negative
+    -- Revisamos que Detalle_Pedido_Precio no sea negativo
     ALTER TABLE MAUV.Detalle_Pedido ADD CONSTRAINT detalle_pedido_precio_no_negativo 
     CHECK (Detalle_Pedido_Precio >= 0);
 
-    -- Make sure Detalle_Pedido_Subtotal is non-negative
+    -- Revisamos que Detalle_Pedido_Subtotal no sea negativo
     ALTER TABLE MAUV.Detalle_Pedido ADD CONSTRAINT detalle_pedido_subtotal_no_negativo 
     CHECK (Detalle_Pedido_Subtotal >= 0);
 
@@ -207,15 +208,15 @@ BEGIN
         Detalle_Factura_Subtotal decimal(18, 2)
     )
 
-    -- Make sure Detalle_Factura_Cantidad is positive
+    -- Revisamos que Detalle_Factura_Cantidad sea positivo
     ALTER TABLE MAUV.Detalle_Factura ADD CONSTRAINT detalle_factura_cantidad_positiva 
     CHECK (Detalle_Factura_Cantidad > 0);
 
-    -- Make sure Detalle_Factura_Precio is non-negative
+    -- Revisamos que Detalle_Factura_Precio no sea negativo
     ALTER TABLE MAUV.Detalle_Factura ADD CONSTRAINT detalle_factura_precio_no_negativo 
     CHECK (Detalle_Factura_Precio >= 0);
 
-    -- Make sure Detalle_Factura_Subtotal is non-negative
+    -- Revisamos que Detalle_Factura_Subtotal no sea negativo
     ALTER TABLE MAUV.Detalle_Factura ADD CONSTRAINT detalle_factura_subtotal_no_negativo 
     CHECK (Detalle_Factura_Subtotal >= 0);
 
@@ -228,15 +229,15 @@ BEGIN
         Detalle_Compra_SubTotal decimal(18,2) NULL
     )
 
-    -- Make sure Detalle_Compra_Precio is non-negative
+    -- Revisamos que Detalle_Compra_Precio no sea negativo
     ALTER TABLE MAUV.Detalle_Compra ADD CONSTRAINT detalle_compra_precio_no_negativo 
     CHECK (Detalle_Compra_Precio >= 0);
 
-    -- Make sure Detalle_Compra_Cantidad is positive
+    -- Revisamos que Detalle_Compra_Cantidad sea positivo
     ALTER TABLE MAUV.Detalle_Compra ADD CONSTRAINT detalle_compra_cantidad_positiva 
     CHECK (Detalle_Compra_Cantidad > 0);
 
-    -- Make sure Detalle_Compra_SubTotal is non-negative
+    -- Revisamos que Detalle_Compra_SubTotal no sea negativo
     ALTER TABLE MAUV.Detalle_Compra ADD CONSTRAINT detalle_compra_subtotal_no_negativo 
     CHECK (Detalle_Compra_SubTotal >= 0);
 END;
@@ -247,12 +248,12 @@ GO
 ------------------------------------------------------
 
 ----
--- Note: we are wrapping the trigger creation in EXEC as sql does not allow to create triggers inside procedures
+-- creación de triggers en EXEC ya que sql no nos permite crear triggers dentro de procedimientos
 ----
 
 CREATE or ALTER PROCEDURE MAUV.crear_triggers AS
 BEGIN
-    -- trigger para que una cancelacion de pedigo no haga referencia a un pedido creado en fechas posterior
+    -- trigger para que una cancelacion de pedido no haga referencia a un pedido creado en fechas posteriores
     EXEC('
     CREATE OR ALTER TRIGGER trg_cancelacion_pedido_fecha_valida ON MAUV.Cancelacion_Pedido
     INSTEAD OF INSERT AS
@@ -378,8 +379,8 @@ CREATE or ALTER PROCEDURE MAUV.migrar_sillones AS
 BEGIN
     -- Sillones
 
-    -- Temporary table needed as we need to generate `medida_codigo` to connect it to sillon table
-    -- This is because master table does not provide one
+    -- Necesitamos una tabla temporal ya que necesitamos generar "medida_codigo" para conectarla a la tabla sillon
+    -- Esto ocurre porque no tenemos el dato en la tabla maestra
     CREATE TABLE MAUV.sillon_temporal (
         sillon_codigo bigint,
         modelo_codigo bigint,
@@ -658,9 +659,9 @@ GO
 
 CREATE or ALTER PROCEDURE MAUV.migrar_detalles AS
 BEGIN
-    -- As we have done with sillones
-    -- here we need to create another temporary table to store the Detalle_Pedido pk
-    -- and be able to pass it to Detalle_Factura
+    -- Como hicimos con sillones, necesitamos crear otra tabla temporal para almacenar el Detalle_Pedido pk
+    --  y poder pasarla a Detalle_Factura
+
     CREATE TABLE MAUV.detalles_temp (
         detalle_pedido_codigo bigint IDENTITY(1,1),
         detalle_pedido_numero decimal(18,0),
@@ -674,7 +675,8 @@ BEGIN
         detalle_factura_subtotal decimal(18,2)
     )
 
-    -- Here we need to Join tables as when sillon info is present, factura is not!
+    -- acá tenemos que unir las tablas porque cuando tenemos la información de sillon, la de factura no lo está.
+
     INSERT INTO MAUV.detalles_temp (
         detalle_pedido_numero,
         detalle_pedido_sillon,

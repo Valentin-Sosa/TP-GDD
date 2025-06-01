@@ -25,6 +25,7 @@ entity "Pedido" as Ped {
 }
 
 entity "Detalle_Pedido" as Det_Ped {
+  *Detalle_Pedido_Codigo: number <<PK>>
   *Detalle_Pedido_Numero: number <<FK>>
   *Detalle_Pedido_Sillon: number <<FK>>
   --
@@ -55,7 +56,7 @@ entity "Cliente" as Cli {
 
 
 entity "Sillon" as Si {
-  *Silon_Codigo: number <<PK>>
+  *Sillon_Codigo: number <<PK>>
   --
   *Sillon_Modelo: Number <<FK>>
   *Sillon_Medida: Number <<FK>>
@@ -63,7 +64,7 @@ entity "Sillon" as Si {
 
 entity "SillonXMaterial" as Si_Mat
 {
-  *Material: Number <<FK>>
+  *Material: char(255) <<FK>>
   *Sillon_Codigo: number <<FK>>
 }
 
@@ -122,11 +123,12 @@ entity "Factura" as Fac {
 }
 
 entity "Detalle_Factura" as Det_Fac {
+  *Detalle_Factura_Codigo: number <<PK>>
   *Detalle_Factura_Numero: number <<FK>>
   *Detalle_Factura_DetPedido: number <<FK>>
   --
   *Detalle_Factura_Precio : number 
-  *Detalle_Factura_Cantidad : datetime
+  *Detalle_Factura_Cantidad : number
   *Detalle_Factura_Subtotal : number
 }
 
