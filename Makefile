@@ -1,4 +1,4 @@
-.PHONY: push_submission create_delivery zip_submission
+.PHONY: push_submission create_submission zip_submission
 
 create_submission: zip_submission
 	@echo "Submission for $(SUBMISSION) has been created, now send the following email:":
@@ -11,5 +11,8 @@ push_submission:
 	@echo "submission pushed, you can attach the assignment .zip to it."
 
 zip_submission:
-	@rm ./submissions/$(SUBMISSION)/mauv123.zip
-	@zip -j -r ./submissions/$(SUBMISSION)/mauv123.zip submissions/$(SUBMISSION)/* submissions/Readme.txt
+	@rm -f ./submissions/$(SUBMISSION)/mauv123.zip
+	@cd ./submissions/$(SUBMISSION) && \
+	cp ../Readme.txt ./ && \
+	zip -r ./mauv123.zip ./* && \
+	rm ./Readme.txt
