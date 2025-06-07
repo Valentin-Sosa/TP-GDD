@@ -256,7 +256,7 @@ BEGIN
     -- trigger para que una cancelacion de pedido no haga referencia a un pedido creado en fechas posteriores
     EXEC('
     CREATE OR ALTER TRIGGER trg_cancelacion_pedido_fecha_valida ON MAUV.Cancelacion_Pedido
-    INSTEAD OF INSERT AS
+    AFTER INSERT, UPDATE AS
     BEGIN
         IF EXISTS (
             SELECT 1
