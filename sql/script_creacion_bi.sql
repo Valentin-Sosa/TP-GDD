@@ -114,66 +114,62 @@ GO
 ------------------------------------------------------
 -- Creacion de funciones utilitarias
 ------------------------------------------------------
-CREATE FUNCTION MAUV.obtener_rango_etario_id(@date DATE) RETURNS INT AS
+CREATE or ALTER PROCEDURE MAUV.BI_crear_funciones_utilitarias AS
 BEGIN
-    DECLARE @edad INT;
+    EXEC('CREATE FUNCTION MAUV.obtener_rango_etario_id(@date DATE) RETURNS INT AS
+    BEGIN
+        DECLARE @edad INT;
 
-    SET @edad = DATEDIFF(YEAR, @date, GETDATE());
+        SET @edad = DATEDIFF(YEAR, @date, GETDATE());
 
-    DECLARE @id INT;
-    SET @id = CASE WHEN @edad < 25 THEN 1
-                   WHEN @edad BETWEEN 25 AND 35 THEN 2 
-                   WHEN @edad > 35 AND @edad <= 50 THEN 3
-                   WHEN @edad > 50 THEN 4
-    END;
+        DECLARE @id INT;
+        SET @id = CASE WHEN @edad < 25 THEN 1
+                    WHEN @edad BETWEEN 25 AND 35 THEN 2 
+                    WHEN @edad > 35 AND @edad <= 50 THEN 3
+                    WHEN @edad > 50 THEN 4
+        END;
 
-    RETURN @id
-END
+        RETURN @id
+    END')
 
-GO
+    EXEC('CREATE FUNCTION MAUV.obtener_turno_venta_id(@date DATETIME) RETURNS INT AS
+    BEGIN
+        DECLARE @hora INT;
 
-CREATE FUNCTION MAUV.obtener_turno_venta_id(@date DATETIME) RETURNS INT AS
-BEGIN
-    DECLARE @hora INT;
+        SET @hora = DATEPART(HOUR, @date)
 
-    SET @hora = DATEPART(HOUR, @date)
+        DECLARE @id INT;
+        SET @id = CASE WHEN @hora >= 8 AND @hora < 14 THEN 1
+                    WHEN @hora >= 14 AND @hora < 20 THEN 2
+        END;
 
-    DECLARE @id INT;
-    SET @id = CASE WHEN @hora >= 8 AND @hora < 14 THEN 1
-                   WHEN @hora >= 14 AND @hora < 20 THEN 2
-    END;
+        RETURN @id
+    END')
 
-    RETURN @id
-END
+    EXEC('CREATE FUNCTION MAUV.obtener_numero_cuatrimestre(@date DATE) RETURNS INT AS
+    BEGIN
+        DECLARE @mes INTEGER;
 
-GO
+        SET @mes = MONTH(@date);
 
-CREATE FUNCTION MAUV.obtener_numero_cuatrimestre(@date DATE) RETURNS INT AS
-BEGIN
-    DECLARE @mes INTEGER;
+        DECLARE @cuatri INT;
+        SET @cuatri = CASE WHEN @mes BETWEEN 1 AND 4 THEN 1
+                    WHEN @mes BETWEEN 5 AND 8 THEN 2
+                    WHEN @mes BETWEEN 9 AND 12 THEN 3
+        END;
+                            
+        RETURN @cuatri;
+    END')
 
-    SET @mes = MONTH(@date);
+    EXEC('CREATE FUNCTION MAUV.get_tiempo_id(@date DATE) RETURNS INT AS
+    BEGIN
+        DECLARE @tiempo_id INTEGER;
 
-    DECLARE @cuatri INT;
-    SET @cuatri = CASE WHEN @mes BETWEEN 1 AND 4 THEN 1
-                   WHEN @mes BETWEEN 5 AND 8 THEN 2
-                   WHEN @mes BETWEEN 9 AND 12 THEN 3
-    END;
-                        
-    RETURN @cuatri;
-END
-
-GO
-
-CREATE FUNCTION MAUV.get_tiempo_id(@date DATE) RETURNS INT AS
-BEGIN
-    DECLARE @tiempo_id INTEGER;
-
-    SET @tiempo_id = (SELECT id FROM MAUV.BI_Tiempo WHERE anio = YEAR(@date) AND mes = MONTH(@date));
-                        
-    RETURN @tiempo_id;
-END
-
+        SET @tiempo_id = (SELECT id FROM MAUV.BI_Tiempo WHERE anio = YEAR(@date) AND mes = MONTH(@date));
+                            
+        RETURN @tiempo_id;
+    END')
+END;
 GO
 
 ------------------------------------------------------
@@ -229,7 +225,7 @@ BEGIN
 
      INSERT INTO MAUV.BI_Sucursal (
         Sucursal_Nro
-    ) SELECT DISTINCT Sucursal_Nro FROM MAUV.Sucursal;
+    ) SELECT DISTINCT Sucursal_NroSucursal FROM MAUV.Sucursal;
 END;
 GO
 
@@ -258,6 +254,7 @@ BEGIN TRY
     BEGIN TRANSACTION;
         EXEC MAUV.BI_crear_tablas_dimensiones;
         EXEC MAUV.BI_crear_tablas_indicadores;
+        EXEC MAUV.BI_crear_funciones_utilitarias;
         EXEC MAUV.BI_popular_dimensiones;
         EXEC MAUV.BI_popular_indicadores;
         EXEC MAUV.BI_crear_vistas;
