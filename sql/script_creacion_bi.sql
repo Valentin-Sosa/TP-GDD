@@ -10,8 +10,8 @@ BEGIN
     CREATE TABLE MAUV.BI_Tiempo (
         id decimal(18,0) PRIMARY KEY IDENTITY(1,1),
         Anio decimal(18,0),
-        Cuatrimestre decimal(18,0),
-        Mes decimal(18,0)
+        Mes decimal(18,0),
+        Cuatrimestre decimal(18,0)
     )
 
     CREATE TABLE MAUV.BI_Ubicacion (
@@ -112,11 +112,124 @@ END;
 GO
 
 ------------------------------------------------------
+-- Creacion de funciones utilitarias
+------------------------------------------------------
+CREATE FUNCTION MAUV.obtener_rango_etario_id(@date DATE) RETURNS INT AS
+BEGIN
+    DECLARE @edad INT;
+
+    SET @edad = DATEDIFF(YEAR, @date, GETDATE());
+
+    DECLARE @id INT;
+    SET @id = CASE WHEN @edad < 25 THEN 1
+                   WHEN @edad BETWEEN 25 AND 35 THEN 2 
+                   WHEN @edad > 35 AND @edad <= 50 THEN 3
+                   WHEN @edad > 50 THEN 4
+    END;
+
+    RETURN @id
+END
+
+GO
+
+CREATE FUNCTION MAUV.obtener_turno_venta_id(@date DATETIME) RETURNS INT AS
+BEGIN
+    DECLARE @hora INT;
+
+    SET @hora = DATEPART(HOUR, @date)
+
+    DECLARE @id INT;
+    SET @id = CASE WHEN @hora >= 8 AND @hora < 14 THEN 1
+                   WHEN @hora >= 14 AND @hora < 20 THEN 2
+    END;
+
+    RETURN @id
+END
+
+GO
+
+CREATE FUNCTION MAUV.obtener_numero_cuatrimestre(@date DATE) RETURNS INT AS
+BEGIN
+    DECLARE @mes INTEGER;
+
+    SET @mes = MONTH(@date);
+
+    DECLARE @cuatri INT;
+    SET @cuatri = CASE WHEN @mes BETWEEN 1 AND 4 THEN 1
+                   WHEN @mes BETWEEN 5 AND 8 THEN 2
+                   WHEN @mes BETWEEN 9 AND 12 THEN 3
+    END;
+                        
+    RETURN @cuatri;
+END
+
+GO
+
+CREATE FUNCTION MAUV.get_tiempo_id(@date DATE) RETURNS INT AS
+BEGIN
+    DECLARE @tiempo_id INTEGER;
+
+    SET @tiempo_id = (SELECT id FROM MAUV.BI_Tiempo WHERE anio = YEAR(@date) AND mes = MONTH(@date));
+                        
+    RETURN @tiempo_id;
+END
+
+GO
+
+------------------------------------------------------
 -- Populacion de tablas: dimensiones
 ------------------------------------------------------
 CREATE or ALTER PROCEDURE MAUV.BI_popular_dimensiones AS
 BEGIN
+    INSERT INTO MAUV.BI_Tiempo (
+        Anio,
+        Mes,
+        Cuatrimestre
+    )
+    (
+        SELECT DISTINCT YEAR(Cliente_Fecha_Nacimiento), MONTH(Cliente_Fecha_Nacimiento), MAUV.obtener_numero_cuatrimestre(Cliente_Fecha_Nacimiento) FROM MAUV.Cliente  
+        UNION SELECT DISTINCT YEAR(Compra_Fecha), MONTH(Compra_Fecha), MAUV.obtener_numero_cuatrimestre(Compra_Fecha) FROM MAUV.Compra  
+        UNION SELECT DISTINCT YEAR(Pedido_Fecha), MONTH(Pedido_Fecha), MAUV.obtener_numero_cuatrimestre(Pedido_Fecha) FROM MAUV.Pedido 
+        UNION SELECT DISTINCT YEAR(Pedido_Cancelacion_Fecha), MONTH(Pedido_Cancelacion_Fecha), MAUV.obtener_numero_cuatrimestre(Pedido_Cancelacion_Fecha) FROM MAUV.Cancelacion_Pedido 
+        UNION SELECT DISTINCT YEAR(Factura_Fecha), MONTH(Factura_Fecha), MAUV.obtener_numero_cuatrimestre(Factura_Fecha) FROM MAUV.Factura
+        UNION SELECT DISTINCT YEAR(Envio_Fecha), MONTH(Envio_Fecha), MAUV.obtener_numero_cuatrimestre(Envio_Fecha) FROM MAUV.Envio
+        UNION SELECT DISTINCT YEAR(Envio_Fecha_Programada), MONTH(Envio_Fecha_Programada), MAUV.obtener_numero_cuatrimestre(Envio_Fecha_Programada) FROM MAUV.Envio
 
+    );
+
+    INSERT INTO MAUV.BI_Ubicacion (
+        Provincia,
+        Localidad
+    )
+    (
+        SELECT DISTINCT Sucursal_Provincia, Sucursal_Localidad FROM MAUV.Sucursal
+        UNION SELECT DISTINCT Cliente_Provincia, Cliente_Localidad FROM MAUV.Cliente
+        UNION SELECT DISTINCT Proveedor_Provincia, Proveedor_Localidad FROM MAUV.Proveedor
+    );
+
+    INSERT INTO MAUV.BI_Rango_Etario_Cliente (
+        Rango
+    ) VALUES ('< 25'), ('25-35'), ('35-50'), ('> 50');
+
+    INSERT INTO MAUV.BI_Turno_Ventas (
+        Rango
+    ) VALUES ('08:00 - 14:00'), ('14:00 - 20:00');
+
+    INSERT INTO MAUV.BI_Tipo_Material (
+        Tipo
+    ) VALUES ('Madera'), ('Relleno'), ('Tela');
+
+    INSERT INTO MAUV.BI_Modelo_Sillon (
+        Modelo
+    ) SELECT DISTINCT Sillon_Modelo FROM Sillon_Modelo;
+
+    INSERT INTO MAUV.BI_Estado_Pedido (
+        Estado
+    ) VALUES ('Entregado'), ('Pendiente'), ('Cancelado');
+
+     INSERT INTO MAUV.BI_Sucursal (
+        Sucursal_Nro
+    ) SELECT DISTINCT Sucursal_Nro FROM MAUV.Sucursal;
 END;
 GO
 
