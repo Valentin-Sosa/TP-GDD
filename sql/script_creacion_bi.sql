@@ -81,10 +81,10 @@ CREATE TABLE MAUV.BI_Indicadores_Pedidos (
     Cantidad_Cancelado decimal(18,0),
     Cantidad_Pendiente decimal(18,0),
     Suma_Tiempo_Registro_Factura decimal(18,0),
-    Sucursal_Nro decimal(18,0) FOREIGN KEY REFERENCES MAUV.BI_Sucursal(id),
+    Sucursal_Nro bigint FOREIGN KEY REFERENCES MAUV.BI_Sucursal(Sucursal_Nro),
     Tiempo_id decimal(18,0) FOREIGN KEY REFERENCES MAUV.BI_Tiempo(id),
-    Turno_Ventas decimal(18,0) FOREIGN KEY REFERENCES MAUV.Turno_Ventas(id),
-    PRIMARY KEY(Sucursal_Nro, Tiempo_id, Turno_Ventas)
+    Turno_Ventas_id decimal(18,0) FOREIGN KEY REFERENCES MAUV.BI_Turno_Ventas(id),
+    PRIMARY KEY(Sucursal_Nro, Tiempo_id, Turno_Ventas_id)
 )
 
 CREATE TABLE MAUV.BI_Indicadores_Compras (
@@ -98,7 +98,7 @@ CREATE TABLE MAUV.BI_Indicadores_Compras (
 )
 
 CREATE TABLE MAUV.BI_Indicadores_Envios (
-    Cantidad decimal(18,0)
+    Cantidad decimal(18,0),
     Cantidad_En_Tiempo decimal(18,0),
     Suma_Costo_Total decimal(18,2),
     Tiempo_id decimal(18,0) FOREIGN KEY REFERENCES MAUV.BI_Tiempo(id),
