@@ -111,6 +111,32 @@ BEGIN
 END;
 GO
 
+------------------------------------------------------
+-- Populacion de tablas: dimensiones
+------------------------------------------------------
+CREATE or ALTER PROCEDURE MAUV.BI_popular_dimensiones AS
+BEGIN
+
+END;
+GO
+
+------------------------------------------------------
+-- Populacion de tablas: indicadores
+------------------------------------------------------
+CREATE or ALTER PROCEDURE MAUV.BI_popular_indicadores AS
+BEGIN
+
+END;
+GO
+
+------------------------------------------------------
+-- Creacion de vistas
+------------------------------------------------------
+CREATE or ALTER PROCEDURE MAUV.BI_crear_vistas AS
+BEGIN
+
+END;
+GO
 
 ------------------------------------------------------
 -- Ejecución de procedures
@@ -119,6 +145,9 @@ BEGIN TRY
     BEGIN TRANSACTION;
         EXEC MAUV.BI_crear_tablas_dimensiones;
         EXEC MAUV.BI_crear_tablas_indicadores;
+        EXEC MAUV.BI_popular_dimensiones;
+        EXEC MAUV.BI_popular_indicadores;
+        EXEC MAUV.BI_crear_vistas;
     COMMIT TRANSACTION;
 END TRY
 BEGIN CATCH

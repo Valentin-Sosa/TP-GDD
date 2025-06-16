@@ -30,3 +30,10 @@ DROP TABLE [MAUV].[BI_Indicadores_Pedidos]
 DROP TABLE [MAUV].[BI_Indicadores_Compras]
 DROP TABLE [MAUV].[BI_Indicadores_Envios]
 GO
+
+DROP PROCEDURE [MAUV].[BI_crear_tablas_dimensiones]
+DROP PROCEDURE [MAUV].[BI_crear_tablas_indicadores]
+DROP PROCEDURE [MAUV].[BI_popular_dimensiones]
+DROP PROCEDURE [MAUV].[BI_popular_indicadores]
+DROP PROCEDURE [MAUV].[BI_crear_vistas]
+GO
