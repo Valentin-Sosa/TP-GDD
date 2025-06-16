@@ -31,8 +31,15 @@ DROP TABLE [MAUV].[BI_Indicadores_Compras]
 DROP TABLE [MAUV].[BI_Indicadores_Envios]
 GO
 
+DROP FUNCTION MAUV.obtener_rango_etario_id
+DROP FUNCTION MAUV.obtener_turno_venta_id
+DROP FUNCTION MAUV.obtener_numero_cuatrimestre
+DROP FUNCTION MAUV.get_tiempo_id
+GO
+
 DROP PROCEDURE [MAUV].[BI_crear_tablas_dimensiones]
 DROP PROCEDURE [MAUV].[BI_crear_tablas_indicadores]
+DROP PROCEDURE [MAUV].[BI_crear_funciones_utilitarias]
 DROP PROCEDURE [MAUV].[BI_popular_dimensiones]
 DROP PROCEDURE [MAUV].[BI_popular_indicadores]
 DROP PROCEDURE [MAUV].[BI_crear_vistas]
