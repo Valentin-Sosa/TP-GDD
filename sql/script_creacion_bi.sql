@@ -70,8 +70,8 @@ BEGIN
 
     CREATE TABLE MAUV.BI_Indicadores_Ventas_Modelo (
         Modelo nvarchar(255),
-        Cantidad_Ventas decimal(18,0),
         Suma_Valor_Ventas decimal(18,2),
+        Cantidad_Ventas decimal(18,0),
         Tiempo_id decimal(18,0) FOREIGN KEY REFERENCES MAUV.BI_Tiempo(id),
         Ubicacion_id decimal(18,0) FOREIGN KEY REFERENCES MAUV.BI_Ubicacion(id),
         Rango_Etario_id decimal(18,0) FOREIGN KEY REFERENCES MAUV.BI_Rango_Etario_Cliente(id),
@@ -161,7 +161,7 @@ BEGIN
         RETURN @cuatri;
     END')
 
-    EXEC('CREATE FUNCTION MAUV.get_tiempo_id(@date DATE) RETURNS INT AS
+    EXEC('CREATE FUNCTION MAUV.obtener_tiempo_id(@date DATE) RETURNS INT AS
     BEGIN
         DECLARE @tiempo_id INTEGER;
 
@@ -234,7 +234,61 @@ GO
 ------------------------------------------------------
 CREATE or ALTER PROCEDURE MAUV.BI_popular_indicadores AS
 BEGIN
+    INSERT INTO MAUV.BI_Indicadores_Facturacion (
+        Suma_Subtotal,
+        Cantidad_Facturas,
+        Sucursal_Nro,
+        Tiempo_Id,
+        Ubicacion_id
+    ) (
+        SELECT DISTINCT 
+            SUM(f.Factura_Total) AS Suma_Subtotal,
+            COUNT(*) AS Cantidad_Facturas,
+            s.Sucursal_Nro,
+            t.id,
+            u.id
+        FROM MAUV.Factura f
+        INNER JOIN MAUV.Sucursal s ON s.Sucursal_Nro = f.Factura_Sucursal 
+        INNER JOIN MAUV.BI_Tiempo t  ON t.Rango = MAUV.obtener_tiempo_id(f.Factura_Fecha)
+        INNER JOIN MAUV.BI_Ubicacion u ON u.Provincia = s.Sucursal_Provincia AND u.Localidad = s.Sucursal_Localidad
+        GROUP BY s.Sucursal_Nro, t.id, u.id;
+    );
 
+    INSERT INTO MAUV.BI_Indicadores_Ventas_Modelo (
+        Modelo,
+        Cantidad_Ventas,
+        Suma_Valor_Ventas,
+        Tiempo_id,
+        Ubicacion_id,
+        Rango_Etario_id
+    ) SELECT DISTINCT
+        sm.Sillon_Modelo, 
+        COUNT(*) AS Cantidad_Ventas, 
+        SUM(Pedido_Total) AS Suma_Valor_Ventas, 
+        t.id, 
+        u.id, 
+        r.id
+    FROM MAUV.Pedido
+    INNER JOIN MAUV.Detalle_Pedido dp ON dp.Detalle_Pedido_Codigo p.Pedido_Numero
+    INNER JOIN MAUV.Sillon s on dp.Detalle_Pedido_Sillon = s.Sillon_Codigo
+    INNER JOIN MAUV.Sillon_Modelo sm on  s.Sillon_Modelo = sm.Sillon_Modelo_Codigo
+    INNER JOIN MAUV.Sucursal su on su.Sucursal = p.Pedido_Sucursal
+    INNER JOIN MAUV.Cliente c on c.Cliente_Dni = p.Pedido_Cliente
+    INNER JOIN MAUV.BI_Tiempo t  ON t.Rango = MAUV.obtener_tiempo_id(p.Pedido_Fecha)
+    INNER JOIN MAUV.BI_Ubicacion u ON u.Provincia = su.Sucursal_Provincia AND u.Localidad = su.Sucursal_Localidad
+    INNER JOIN MAUV.Rango_Etario_id r ON r.rango = obtener_rango_etario_id(c.Cliente_Fecha_Nacimiento)
+    GROUP BY r.id, t.id, u.id;
+
+
+    INSERT INTO MAUV.BI_Indicadores_Ventas_Modelo (
+        Modelo,
+        Cantidad_Ventas,
+        Suma_Valor_Ventas,
+        Tiempo_id,
+        Ubicacion_id,
+        Rango_Etario_id
+    ) SELECT DISTINCT
+    
 END;
 GO
 
