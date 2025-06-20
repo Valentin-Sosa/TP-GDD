@@ -75,7 +75,7 @@ BEGIN
         Tiempo_id decimal(18,0) FOREIGN KEY REFERENCES MAUV.BI_Tiempo(id),
         Ubicacion_id decimal(18,0) FOREIGN KEY REFERENCES MAUV.BI_Ubicacion(id),
         Rango_Etario_id decimal(18,0) FOREIGN KEY REFERENCES MAUV.BI_Rango_Etario_Cliente(id),
-        PRIMARY KEY(Tiempo_id, Ubicacion_id, Rango_Etario_id)
+        PRIMARY KEY(Modelo, Tiempo_id, Ubicacion_id, Rango_Etario_id)
     )
 
     CREATE TABLE MAUV.BI_Indicadores_Pedidos (
@@ -269,14 +269,14 @@ BEGIN
         u.id, 
         r.id
     FROM MAUV.Pedido p
-    INNER JOIN MAUV.Detalle_Pedido dp ON dp.Detalle_Pedido_Codigo = p.Pedido_Numero
+    INNER JOIN MAUV.Detalle_Pedido dp ON dp.Detalle_Pedido_Numero = p.Pedido_Numero
     INNER JOIN MAUV.Sillon s on dp.Detalle_Pedido_Sillon = s.Sillon_Codigo
     INNER JOIN MAUV.Sillon_Modelo sm on  s.Sillon_Modelo = sm.Sillon_Modelo_Codigo
     INNER JOIN MAUV.Sucursal su on su.Sucursal_NroSucursal = p.Pedido_Sucursal
     INNER JOIN MAUV.Cliente c on c.Cliente_Dni = p.Pedido_Cliente
     INNER JOIN MAUV.BI_Tiempo t  ON t.id = MAUV.obtener_tiempo_id(p.Pedido_Fecha)
     INNER JOIN MAUV.BI_Ubicacion u ON u.Provincia = su.Sucursal_Provincia AND u.Localidad = su.Sucursal_Localidad
-    INNER JOIN MAUV.BI_Rango_Etario_Cliente r ON r.rango = MAUV.obtener_rango_etario_id(c.Cliente_Fecha_Nacimiento)
+    INNER JOIN MAUV.BI_Rango_Etario_Cliente r ON r.id = MAUV.obtener_rango_etario_id(c.Cliente_Fecha_Nacimiento)
     GROUP BY sm.Sillon_Modelo, r.id, t.id, u.id;
 
 
@@ -299,7 +299,7 @@ BEGIN
         t.id,
         tv.id
     FROM MAUV.Pedido p
-    INNER JOIN MAUV.Detalle_Pedido dp ON dp.Detalle_Pedido_Codigo = p.Pedido_Numero
+    INNER JOIN MAUV.Detalle_Pedido dp ON dp.Detalle_Pedido_Numero = p.Pedido_Numero
     INNER JOIN MAUV.Detalle_Factura df ON df.Detalle_Factura_DetPedido = dp.Detalle_Pedido_Codigo
     INNER JOIN MAUV.Factura f ON f.Factura_Numero = df.Detalle_Factura_Numero
     INNER JOIN MAUV.BI_Sucursal s ON s.Sucursal_Nro = p.Pedido_Sucursal
@@ -377,7 +377,6 @@ BEGIN
     -- ver si realmente hace falta
     JOIN MAUV.BI_Ubicacion u ON f.Ubicacion_id = u.id
     GROUP BY t.Mes, u.Provincia;
-
         
 END;
 GO
