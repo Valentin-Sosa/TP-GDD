@@ -83,7 +83,6 @@ BEGIN
         Cantidad_Entregado decimal(18,0),
         Cantidad_Cancelado decimal(18,0),
         Cantidad_Pendiente decimal(18,0),
-        Suma_Tiempo_Registro_Factura decimal(18,0),
         Sucursal_Nro bigint FOREIGN KEY REFERENCES MAUV.BI_Sucursal(Sucursal_Nro),
         Tiempo_id decimal(18,0) FOREIGN KEY REFERENCES MAUV.BI_Tiempo(id),
         Turno_Ventas_id decimal(18,0) FOREIGN KEY REFERENCES MAUV.BI_Turno_Ventas(id),
@@ -289,19 +288,27 @@ BEGIN
         Sucursal_Nro,
         Tiempo_id,
         Turno_Ventas_id
-    ) SELECT DISTINCT 
-        COUNT(*) AS Cantidad,
+    )
+    SELECT DISTINCT 
+        COUNT(*),
         SUM(CASE WHEN p.Pedido_Estado = 'ENTREGADO' THEN 1 ELSE 0 END),
         SUM(CASE WHEN p.Pedido_Estado = 'CANCELADO' THEN 1 ELSE 0 END),
         SUM(CASE WHEN p.Pedido_Estado = 'PENDIENTE' THEN 1 ELSE 0 END),
-        SUM(DATEDIFF(DAY, p.Pedido_Fecha, f.Factura_Fecha)),
+        SUM(
+            CASE 
+                WHEN f.Factura_Fecha IS NOT NULL 
+                THEN DATEDIFF(DAY, p.Pedido_Fecha, f.Factura_Fecha)
+                ELSE 0
+            END
+        ) AS Suma_Tiempo_Registro_Factura,
         s.Sucursal_Nro,
         t.id,
         tv.id
     FROM MAUV.Pedido p
-    INNER JOIN MAUV.Detalle_Pedido dp ON dp.Detalle_Pedido_Numero = p.Pedido_Numero
-    INNER JOIN MAUV.Detalle_Factura df ON df.Detalle_Factura_DetPedido = dp.Detalle_Pedido_Codigo
-    INNER JOIN MAUV.Factura f ON f.Factura_Numero = df.Detalle_Factura_Numero
+    -- Left join to also count cancelado and pendiente as they don't have detail nor factura
+    LEFT JOIN MAUV.Detalle_Pedido dp ON dp.Detalle_Pedido_Numero = p.Pedido_Numero
+    LEFT JOIN MAUV.Detalle_Factura df ON df.Detalle_Factura_DetPedido = dp.Detalle_Pedido_Codigo
+    LEFT JOIN MAUV.Factura f ON f.Factura_Numero = df.Detalle_Factura_Numero
     INNER JOIN MAUV.BI_Sucursal s ON s.Sucursal_Nro = p.Pedido_Sucursal
     INNER JOIN MAUV.BI_Tiempo t ON t.id = MAUV.obtener_tiempo_id(p.Pedido_Fecha)
     INNER JOIN MAUV.BI_Turno_Ventas tv ON tv.id = MAUV.obtener_turno_venta_id(p.Pedido_Fecha)
