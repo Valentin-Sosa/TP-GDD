@@ -5,7 +5,7 @@ DROP VIEW MAUV.BI_Vista_Ganancias_Mensuales;
 DROP VIEW MAUV.BI_Vista_Promedio_Factura_Mensual_Provincia;
 DROP VIEW MAUV.BI_Vista_Volumen_Pedidos;
 DROP VIEW MAUV.BI_Vista_Rendimiento_Modelos;
-DROP VIEW MAUV.BI_Vista_Volumen_Pedidos;
+DROP VIEW MAUV.BI_Vista_Tiempo_Promedio_Fabricacion;
 DROP VIEW MAUV.BI_Vista_Conversion_Pedidos;
 DROP VIEW MAUV.BI_Vista_Promedio_Compras_Mensual;
 DROP VIEW MAUV.BI_Vista_Compras_Tipo_Material;
