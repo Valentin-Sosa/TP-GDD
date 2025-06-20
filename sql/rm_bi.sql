@@ -34,7 +34,7 @@ GO
 DROP FUNCTION MAUV.obtener_rango_etario_id
 DROP FUNCTION MAUV.obtener_turno_venta_id
 DROP FUNCTION MAUV.obtener_numero_cuatrimestre
-DROP FUNCTION MAUV.get_tiempo_id
+DROP FUNCTION MAUV.obtener_tiempo_id
 GO
 
 DROP PROCEDURE [MAUV].[BI_crear_tablas_dimensiones]
