@@ -352,10 +352,10 @@ BEGIN
         t.id,
         u.id
     FROM MAUV.Envio e
-    INNER JOIN MAUV.Factura f ON e.Envio_Factura = f.Factura_Numero
-    INNER JOIN MAUV.Sucursal s ON s.Sucursal_NroSucursal = f.Factura_Sucursal
+    INNER JOIN MAUV.Factura s ON e.Envio_Factura = f.Factura_Numero
+    INNER JOIN MAUV.Cliente c ON c.Cliente_Dni = f.Factura_Cliente
     INNER JOIN MAUV.BI_Tiempo t ON t.id = MAUV.obtener_tiempo_id(e.Envio_Fecha)
-    INNER JOIN MAUV.BI_Ubicacion u ON u.Provincia = s.Sucursal_Provincia AND u.Localidad = s.Sucursal_Localidad
+    INNER JOIN MAUV.BI_Ubicacion u ON u.Provincia = c.Cliente_Provincia AND u.Localidad = c.Cliente_Localidad
     GROUP BY t.id, u.id;
 END;
 GO
@@ -445,7 +445,69 @@ BEGIN
     INNER JOIN MAUV.BI_Sucursal s ON  p.Sucursal_Nro = s.Sucursal_Nro
     GROUP BY t.Cuatrimestre, s.Sucursal_Nro, p.Cantidad, p.Cantidad_Entregado, p.Cantidad_Cancelado, p.Cantidad_Pendiente
 
-        
+    CREATE VIEW MAUV.BI_Vista_Tiempo_Promedio_Fabricacion AS
+    SELECT
+    p.Sucursal_Nro,
+    t.Anio,
+    t.Cuatrimestre,
+    AVG(p.Suma_Tiempo_Registro_Factura) AS Tiempo_Promedio_Fabricacion
+    FROM MAUV.BI_Indicadores_Pedidos p
+    INNER JOIN MAUV.Tiempo_Id t ON t.id = p.Tiempo_id
+    GROUP BY s.Sucursal_Nro, t.Anio, t.Cuatrimestre
+    
+
+    CREATE VIEW MAUV.BI_Vista_Promedio_Compras_Mensual AS
+    SELECT
+        t.Anio,
+        t.Mes,
+        u.Provincia,
+        u.Localidad,
+        s.Sucursal_Nro,
+        c.Suma_SubTotal / c.Cantidad_Compras AS Promedio_Compras_Mes
+    FROM MAUV.BI_Indicadores_Compras c
+    JOIN MAUV.BI_Tiempo t ON t.id = c.Tiempo_id
+    JOIN MAUV.BI_Ubicacion u ON u.id = c.Ubicacion_id
+    GROUP BY
+        t.Anio,
+        t.Mes,
+        u.Provincia,
+        u.Localidad,
+        s.Sucursal_Nro;
+
+    CREATE VIEW MAUV.BI_Vista_Compras_Tipo_Material AS
+    SELECT
+    m.Tipo,
+    c.Sucursal_Nro,
+    t.Cuatrimestre,
+    SUM(c.Suma_Subtotal) AS Compras_Tipo_Material
+    FROM MAUV.BI_Indicadores_Compras c
+    INNER JOIN MAUV.BI_Tipo_Material m ON c.Tipo_Material_id = m.id
+    INNER JOIN MAUV.BI_Tiempo t ON t.id = c.Tiempo_Id
+    GROUP BY m.Tipo, c.Sucursal_Nro, t.Cuatrimestre
+
+    CREATE VIEW MAUV.BI_Vista_Porcentaje_Cumplimiento_Envios AS
+    SELECT
+        t.Anio,
+        t.Mes,
+        u.Provincia,
+        u.Localidad,
+        CAST(
+            100.0 * e.Cantidad_En_Tiempo / NULLIF(e.Cantidad, 0)
+            AS DECIMAL(5,2)
+        ) AS Porcentaje_Cumplimiento
+    FROM MAUV.BI_Indicadores_Envios e
+    JOIN MAUV.BI_Tiempo t ON e.Tiempo_id = t.id
+    JOIN MAUV.BI_Ubicacion u ON e.Ubicacion_id = u.id;
+
+    
+    CREATE VIEW MAUV.BI_Vista_Top_Localidades_Costo_Envio AS
+    SELECT TOP 3
+        u.Localidad,
+        AVG(e.Suma_Costo_Total) AS Promedio_Costo_Envio
+    FROM MAUV.BI_Indicadores_Envios e
+    INNER JOIN MAUV.BI_Ubicacion u ON u.id = e.Ubicacion_id
+    GROUP BY u.Localidad
+    ORDER BY Promedio_Costo_Envio DESC
 END;
 GO
 
