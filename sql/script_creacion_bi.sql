@@ -324,7 +324,7 @@ BEGIN
         Ubicacion_id,
         Tipo_Material_id
     ) SELECT
-        SUM(dc.Detalle_Compra_SubTotal) AS Suma_Subtotal,
+        SUM(c.Compra_Total) AS Suma_Subtotal,
         COUNT(*) AS Cantidad_Compras,
         c.Compra_Sucursal,
         t.id AS Tiempo_id,
@@ -507,7 +507,7 @@ CREATE VIEW MAUV.BI_Vista_Porcentaje_Cumplimiento_Envios AS
 SELECT
     t.Mes,
     CAST(
-        100.0 * e.Cantidad_En_Tiempo / NULLIF(e.Cantidad, 0)
+        100.0 * SUM(e.Cantidad_En_Tiempo) / NULLIF(SUM(e.Cantidad), 0)
         AS DECIMAL(5,2)
     ) AS Porcentaje_Cumplimiento
 FROM MAUV.BI_Indicadores_Envios e
