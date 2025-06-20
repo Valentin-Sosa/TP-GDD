@@ -392,16 +392,12 @@ GO
 CREATE VIEW MAUV.BI_Vista_Ganancias_Mensuales AS
 SELECT
     t.Mes,
-    u.Provincia,
-    -- ver si el sum es necesario
+    c.Sucursal_Nro,
     SUM(f.Suma_Subtotal) - SUM(c.Suma_Subtotal) AS Ganancia
 FROM MAUV.BI_Indicadores_Facturacion f
-JOIN MAUV.BI_Indicadores_Compras c
-ON f.Sucursal_Nro = c.Sucursal_Nro AND f.Tiempo_id = c.Tiempo_id
+JOIN MAUV.BI_Indicadores_Compras c ON f.Sucursal_Nro = c.Sucursal_Nro AND f.Tiempo_id = c.Tiempo_id
 JOIN MAUV.BI_Tiempo t ON f.Tiempo_id = t.id
--- ver si realmente hace falta
-JOIN MAUV.BI_Ubicacion u ON f.Ubicacion_id = u.id
-GROUP BY t.Mes, u.Provincia;
+GROUP BY t.Mes, c.Sucursal_Nro;
 GO
 
 CREATE VIEW MAUV.BI_Vista_Promedio_Factura_Mensual_Provincia AS
@@ -439,11 +435,10 @@ JOIN (
             ORDER BY Cantidad_Ventas DESC
         ) AS Posicion
     FROM MAUV.BI_Indicadores_Ventas_Modelo
-) top3
-    ON vm.Tiempo_id = top3.Tiempo_id
-    AND vm.Ubicacion_id = top3.Ubicacion_id
-    AND vm.Rango_Etario_id = top3.Rango_Etario_id
-    AND vm.Modelo = top3.Modelo
+) top3 ON vm.Tiempo_id = top3.Tiempo_id
+        AND vm.Ubicacion_id = top3.Ubicacion_id
+        AND vm.Rango_Etario_id = top3.Rango_Etario_id
+        AND vm.Modelo = top3.Modelo
 WHERE top3.Posicion <= 3;
 GO
 
@@ -477,41 +472,31 @@ GO
 CREATE VIEW MAUV.BI_Vista_Tiempo_Promedio_Fabricacion AS
 SELECT
 p.Sucursal_Nro,
-t.Anio,
 t.Cuatrimestre,
-AVG(p.Suma_Tiempo_Registro_Factura) AS Tiempo_Promedio_Fabricacion
+SUM(p.Suma_Tiempo_Registro_Factura) / SUM(p.Cantidad) AS Tiempo_Promedio_Fabricacion_Dias
 FROM MAUV.BI_Indicadores_Pedidos p
 INNER JOIN MAUV.BI_Tiempo t ON t.id = p.Tiempo_id
-GROUP BY p.Sucursal_Nro, t.Anio, t.Cuatrimestre
+GROUP BY p.Sucursal_Nro, t.Cuatrimestre
 GO
 
 CREATE VIEW MAUV.BI_Vista_Promedio_Compras_Mensual AS
 SELECT
-    t.Anio,
     t.Mes,
-    u.Provincia,
-    u.Localidad,
-    c.Sucursal_Nro,
-    c.Suma_SubTotal / c.Cantidad_Compras AS Promedio_Compras_Mes
+    SUM(c.Suma_SubTotal) / SUM(c.Cantidad_Compras) AS Promedio_Compras_Mes
 FROM MAUV.BI_Indicadores_Compras c
 JOIN MAUV.BI_Tiempo t ON t.id = c.Tiempo_id
-JOIN MAUV.BI_Ubicacion u ON u.id = c.Ubicacion_id
 GROUP BY
-    t.Anio,
     t.Mes,
-    u.Provincia,
-    u.Localidad,
-    c.Sucursal_Nro,
     c.Suma_SubTotal,
     c.Cantidad_Compras;
 GO
 
 CREATE VIEW MAUV.BI_Vista_Compras_Tipo_Material AS
 SELECT
-m.Tipo,
-c.Sucursal_Nro,
-t.Cuatrimestre,
-SUM(c.Suma_Subtotal) AS Compras_Tipo_Material
+    m.Tipo,
+    c.Sucursal_Nro,
+    t.Cuatrimestre,
+    SUM(c.Suma_Subtotal) AS Compras_Tipo_Material
 FROM MAUV.BI_Indicadores_Compras c
 INNER JOIN MAUV.BI_Tipo_Material m ON c.Tipo_Material_id = m.id
 INNER JOIN MAUV.BI_Tiempo t ON t.id = c.Tiempo_Id
@@ -520,23 +505,20 @@ GO
 
 CREATE VIEW MAUV.BI_Vista_Porcentaje_Cumplimiento_Envios AS
 SELECT
-    t.Anio,
     t.Mes,
-    u.Provincia,
-    u.Localidad,
     CAST(
         100.0 * e.Cantidad_En_Tiempo / NULLIF(e.Cantidad, 0)
         AS DECIMAL(5,2)
     ) AS Porcentaje_Cumplimiento
 FROM MAUV.BI_Indicadores_Envios e
 JOIN MAUV.BI_Tiempo t ON e.Tiempo_id = t.id
-JOIN MAUV.BI_Ubicacion u ON e.Ubicacion_id = u.id;
+GROUP BY t.Mes
 GO
 
 CREATE VIEW MAUV.BI_Vista_Top_Localidades_Costo_Envio AS
 SELECT TOP 3
     u.Localidad,
-    AVG(e.Suma_Costo_Total) AS Promedio_Costo_Envio
+    SUM(e.Suma_Costo_Total) / SUM(e.Cantidad) AS Promedio_Costo_Envio
 FROM MAUV.BI_Indicadores_Envios e
 INNER JOIN MAUV.BI_Ubicacion u ON u.id = e.Ubicacion_id
 GROUP BY u.Localidad
