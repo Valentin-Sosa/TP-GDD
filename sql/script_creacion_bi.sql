@@ -83,6 +83,7 @@ BEGIN
         Cantidad_Entregado decimal(18,0),
         Cantidad_Cancelado decimal(18,0),
         Cantidad_Pendiente decimal(18,0),
+        Suma_Tiempo_Registro_Factura decimal(18,0),
         Sucursal_Nro bigint FOREIGN KEY REFERENCES MAUV.BI_Sucursal(Sucursal_Nro),
         Tiempo_id decimal(18,0) FOREIGN KEY REFERENCES MAUV.BI_Tiempo(id),
         Turno_Ventas_id decimal(18,0) FOREIGN KEY REFERENCES MAUV.BI_Turno_Ventas(id),
@@ -359,7 +360,7 @@ BEGIN
         t.id,
         u.id
     FROM MAUV.Envio e
-    INNER JOIN MAUV.Factura s ON e.Envio_Factura = f.Factura_Numero
+    INNER JOIN MAUV.Factura f ON e.Envio_Factura = f.Factura_Numero
     INNER JOIN MAUV.Cliente c ON c.Cliente_Dni = f.Factura_Cliente
     INNER JOIN MAUV.BI_Tiempo t ON t.id = MAUV.obtener_tiempo_id(e.Envio_Fecha)
     INNER JOIN MAUV.BI_Ubicacion u ON u.Provincia = c.Cliente_Provincia AND u.Localidad = c.Cliente_Localidad
@@ -385,6 +386,7 @@ BEGIN
     -- ver si realmente hace falta
     JOIN MAUV.BI_Ubicacion u ON f.Ubicacion_id = u.id
     GROUP BY t.Mes, u.Provincia;
+    GO
 
     CREATE VIEW MAUV.BI_Vista_Promedio_Factura_Mensual_Provincia AS
     SELECT
@@ -396,6 +398,7 @@ BEGIN
     INNER JOIN MAUV.BI_Tiempo t ON f.Tiempo_id = t.id
     INNER JOIN MAUV.BI_Ubicacion u ON f.Ubicacion_id = u.id
     GROUP BY u.Provincia, t.Anio, t.Cuatrimestre
+    GO
 
     CREATE VIEW MAUV.BI_Vista_Rendimiento_Modelos AS
     SELECT
@@ -404,7 +407,7 @@ BEGIN
         u.Provincia,
         u.Localidad,
         r.Rango AS Rango_Etario,
-        vm.Modelo,
+        vm.Modelo
     FROM MAUV.BI_Indicadores_Ventas_Modelo vm
     JOIN MAUV.BI_Tiempo t ON vm.Tiempo_id = t.id
     JOIN MAUV.BI_Ubicacion u ON vm.Ubicacion_id = u.id
@@ -426,6 +429,7 @@ BEGIN
         AND vm.Rango_Etario_id = top3.Rango_Etario_id
         AND vm.Modelo = top3.Modelo
     WHERE top3.Posicion <= 3;
+    GO
 
     CREATE VIEW MAUV.BI_Vista_Volumen_Pedidos AS
     SELECT
@@ -439,6 +443,7 @@ BEGIN
     INNER JOIN MAUV.BI_Sucursal s ON  p.Sucursal_Nro = s.Sucursal_Nro
     INNER JOIN MAUV.BI_Turno_Ventas tv ON p.Turno_Ventas_id = tv.id
     GROUP BY s.Sucursal_Nro, t.Mes, t.Anio,  p.Turno_Ventas_id
+    GO
 
     CREATE VIEW MAUV.BI_Vista_Conversion_Pedidos AS
     SELECT
@@ -451,6 +456,7 @@ BEGIN
     INNER JOIN MAUV.BI_Tiempo t ON Tiempo_Id = t.id
     INNER JOIN MAUV.BI_Sucursal s ON  p.Sucursal_Nro = s.Sucursal_Nro
     GROUP BY t.Cuatrimestre, s.Sucursal_Nro, p.Cantidad, p.Cantidad_Entregado, p.Cantidad_Cancelado, p.Cantidad_Pendiente
+    GO
 
     CREATE VIEW MAUV.BI_Vista_Tiempo_Promedio_Fabricacion AS
     SELECT
@@ -459,9 +465,9 @@ BEGIN
     t.Cuatrimestre,
     AVG(p.Suma_Tiempo_Registro_Factura) AS Tiempo_Promedio_Fabricacion
     FROM MAUV.BI_Indicadores_Pedidos p
-    INNER JOIN MAUV.Tiempo_Id t ON t.id = p.Tiempo_id
-    GROUP BY s.Sucursal_Nro, t.Anio, t.Cuatrimestre
-    
+    INNER JOIN MAUV.BI_Tiempo t ON t.id = p.Tiempo_id
+    GROUP BY p.Sucursal_Nro, t.Anio, t.Cuatrimestre
+    GO
 
     CREATE VIEW MAUV.BI_Vista_Promedio_Compras_Mensual AS
     SELECT
@@ -469,7 +475,7 @@ BEGIN
         t.Mes,
         u.Provincia,
         u.Localidad,
-        s.Sucursal_Nro,
+        c.Sucursal_Nro,
         c.Suma_SubTotal / c.Cantidad_Compras AS Promedio_Compras_Mes
     FROM MAUV.BI_Indicadores_Compras c
     JOIN MAUV.BI_Tiempo t ON t.id = c.Tiempo_id
@@ -479,7 +485,10 @@ BEGIN
         t.Mes,
         u.Provincia,
         u.Localidad,
-        s.Sucursal_Nro;
+        c.Sucursal_Nro,
+        c.Suma_SubTotal,
+        c.Cantidad_Compras;
+    GO
 
     CREATE VIEW MAUV.BI_Vista_Compras_Tipo_Material AS
     SELECT
@@ -491,6 +500,7 @@ BEGIN
     INNER JOIN MAUV.BI_Tipo_Material m ON c.Tipo_Material_id = m.id
     INNER JOIN MAUV.BI_Tiempo t ON t.id = c.Tiempo_Id
     GROUP BY m.Tipo, c.Sucursal_Nro, t.Cuatrimestre
+    GO
 
     CREATE VIEW MAUV.BI_Vista_Porcentaje_Cumplimiento_Envios AS
     SELECT
@@ -505,7 +515,7 @@ BEGIN
     FROM MAUV.BI_Indicadores_Envios e
     JOIN MAUV.BI_Tiempo t ON e.Tiempo_id = t.id
     JOIN MAUV.BI_Ubicacion u ON e.Ubicacion_id = u.id;
-
+    GO
     
     CREATE VIEW MAUV.BI_Vista_Top_Localidades_Costo_Envio AS
     SELECT TOP 3
@@ -515,6 +525,7 @@ BEGIN
     INNER JOIN MAUV.BI_Ubicacion u ON u.id = e.Ubicacion_id
     GROUP BY u.Localidad
     ORDER BY Promedio_Costo_Envio DESC
+    GO
 END;
 GO
 
