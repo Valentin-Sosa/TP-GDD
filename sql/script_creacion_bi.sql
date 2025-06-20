@@ -458,15 +458,15 @@ GO
 
 CREATE VIEW MAUV.BI_Vista_Conversion_Pedidos AS
 SELECT
-(p.Cantidad_Entregado * 100.0) / NULLIF(p.Cantidad, 0) AS Porcentaje_Entregado,
-(p.Cantidad_Cancelado * 100.0) / NULLIF(p.Cantidad, 0) AS Porcentaje_Cancelado,
-(p.Cantidad_Pendiente * 100.0) / NULLIF(p.Cantidad, 0) AS Porcentaje_Pendiente,
+(SUM(p.Cantidad_Entregado) * 100.0) / NULLIF(SUM(p.Cantidad), 0) AS Porcentaje_Entregado,
+(SUM(p.Cantidad_Cancelado) * 100.0) / NULLIF(SUM(p.Cantidad), 0) AS Porcentaje_Cancelado,
+(SUM(p.Cantidad_Pendiente) * 100.0) / NULLIF(SUM(p.Cantidad), 0) AS Porcentaje_Pendiente,
 t.Cuatrimestre,
 s.Sucursal_Nro
 FROM MAUV.BI_Indicadores_Pedidos p
 INNER JOIN MAUV.BI_Tiempo t ON Tiempo_Id = t.id
 INNER JOIN MAUV.BI_Sucursal s ON  p.Sucursal_Nro = s.Sucursal_Nro
-GROUP BY t.Cuatrimestre, s.Sucursal_Nro, p.Cantidad, p.Cantidad_Entregado, p.Cantidad_Cancelado, p.Cantidad_Pendiente
+GROUP BY t.Cuatrimestre, s.Sucursal_Nro
 GO
 
 CREATE VIEW MAUV.BI_Vista_Tiempo_Promedio_Fabricacion AS
