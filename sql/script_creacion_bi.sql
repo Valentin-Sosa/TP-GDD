@@ -244,14 +244,14 @@ BEGIN
         SELECT DISTINCT 
             SUM(f.Factura_Total) AS Suma_Subtotal,
             COUNT(*) AS Cantidad_Facturas,
-            s.Sucursal_Nro,
+            s.Sucursal_NroSucursal,
             t.id,
             u.id
         FROM MAUV.Factura f
-        INNER JOIN MAUV.Sucursal s ON s.Sucursal_Nro = f.Factura_Sucursal 
-        INNER JOIN MAUV.BI_Tiempo t  ON t.Rango = MAUV.obtener_tiempo_id(f.Factura_Fecha)
+        INNER JOIN MAUV.Sucursal s ON s.Sucursal_NroSucursal = f.Factura_Sucursal 
+        INNER JOIN MAUV.BI_Tiempo t  ON t.id = MAUV.obtener_tiempo_id(f.Factura_Fecha)
         INNER JOIN MAUV.BI_Ubicacion u ON u.Provincia = s.Sucursal_Provincia AND u.Localidad = s.Sucursal_Localidad
-        GROUP BY s.Sucursal_Nro, t.id, u.id;
+		GROUP BY s.Sucursal_NroSucursal, t.id, u.id
     );
 
     INSERT INTO MAUV.BI_Indicadores_Ventas_Modelo (
@@ -268,27 +268,95 @@ BEGIN
         t.id, 
         u.id, 
         r.id
-    FROM MAUV.Pedido
-    INNER JOIN MAUV.Detalle_Pedido dp ON dp.Detalle_Pedido_Codigo p.Pedido_Numero
+    FROM MAUV.Pedido p
+    INNER JOIN MAUV.Detalle_Pedido dp ON dp.Detalle_Pedido_Codigo = p.Pedido_Numero
     INNER JOIN MAUV.Sillon s on dp.Detalle_Pedido_Sillon = s.Sillon_Codigo
     INNER JOIN MAUV.Sillon_Modelo sm on  s.Sillon_Modelo = sm.Sillon_Modelo_Codigo
-    INNER JOIN MAUV.Sucursal su on su.Sucursal = p.Pedido_Sucursal
+    INNER JOIN MAUV.Sucursal su on su.Sucursal_NroSucursal = p.Pedido_Sucursal
     INNER JOIN MAUV.Cliente c on c.Cliente_Dni = p.Pedido_Cliente
-    INNER JOIN MAUV.BI_Tiempo t  ON t.Rango = MAUV.obtener_tiempo_id(p.Pedido_Fecha)
+    INNER JOIN MAUV.BI_Tiempo t  ON t.id = MAUV.obtener_tiempo_id(p.Pedido_Fecha)
     INNER JOIN MAUV.BI_Ubicacion u ON u.Provincia = su.Sucursal_Provincia AND u.Localidad = su.Sucursal_Localidad
-    INNER JOIN MAUV.Rango_Etario_id r ON r.rango = obtener_rango_etario_id(c.Cliente_Fecha_Nacimiento)
-    GROUP BY r.id, t.id, u.id;
+    INNER JOIN MAUV.BI_Rango_Etario_Cliente r ON r.rango = MAUV.obtener_rango_etario_id(c.Cliente_Fecha_Nacimiento)
+    GROUP BY sm.Sillon_Modelo, r.id, t.id, u.id;
 
 
-    INSERT INTO MAUV.BI_Indicadores_Ventas_Modelo (
-        Modelo,
-        Cantidad_Ventas,
-        Suma_Valor_Ventas,
+    INSERT INTO MAUV.BI_Indicadores_Pedidos (
+        Cantidad,
+        Cantidad_Entregado,
+        Cantidad_Cancelado,
+        Cantidad_Pendiente,
+        Suma_Tiempo_Registro_Factura,
+        Sucursal_Nro,
+        Tiempo_id,
+        Turno_Ventas_id
+    ) SELECT DISTINCT 
+        COUNT(*) AS Cantidad,
+        SUM(CASE WHEN p.Pedido_Estado = 'ENTREGADO' THEN 1 ELSE 0 END),
+        SUM(CASE WHEN p.Pedido_Estado = 'CANCELADO' THEN 1 ELSE 0 END),
+        SUM(CASE WHEN p.Pedido_Estado = 'PENDIENTE' THEN 1 ELSE 0 END),
+        SUM(DATEDIFF(DAY, p.Pedido_Fecha, f.Factura_Fecha)),
+        s.Sucursal_Nro,
+        t.id,
+        tv.id
+    FROM MAUV.Pedido p
+    INNER JOIN MAUV.Detalle_Pedido dp ON dp.Detalle_Pedido_Codigo = p.Pedido_Numero
+    INNER JOIN MAUV.Detalle_Factura df ON df.Detalle_Factura_DetPedido = dp.Detalle_Pedido_Codigo
+    INNER JOIN MAUV.Factura f ON f.Factura_Numero = df.Detalle_Factura_Numero
+    INNER JOIN MAUV.BI_Sucursal s ON s.Sucursal_Nro = p.Pedido_Sucursal
+    INNER JOIN MAUV.BI_Tiempo t ON t.id = MAUV.obtener_tiempo_id(p.Pedido_Fecha)
+    INNER JOIN MAUV.BI_Turno_Ventas tv ON tv.id = MAUV.obtener_turno_venta_id(p.Pedido_Fecha)
+    GROUP BY s.Sucursal_Nro, t.id, tv.id;
+    
+
+    INSERT INTO MAUV.BI_Indicadores_Compras(
+        Suma_Subtotal,
+        Cantidad_Compras,
+        Sucursal_Nro,
         Tiempo_id,
         Ubicacion_id,
-        Rango_Etario_id
-    ) SELECT DISTINCT
+        Tipo_Material_id
+    ) SELECT
+        SUM(dc.Detalle_Compra_SubTotal) AS Suma_Subtotal,
+        COUNT(*) AS Cantidad_Compras,
+        c.Compra_Sucursal,
+        t.id AS Tiempo_id,
+        u.id AS Ubicacion_id,
+        tm.id AS Tipo_Material_id
+    FROM MAUV.Compra c
+    INNER JOIN MAUV.Detalle_Compra dc ON c.Compra_Numero = dc.Detalle_Compra_Numero
+    INNER JOIN MAUV.Material m ON m.Material_Nombre = dc.Detalle_Compra_Material
+    INNER JOIN MAUV.BI_Tipo_Material tm ON tm.Tipo = m.Material_Tipo
+    INNER JOIN MAUV.Sucursal s ON s.Sucursal_NroSucursal = c.Compra_Sucursal
+    INNER JOIN MAUV.BI_Tiempo t ON t.id = MAUV.obtener_tiempo_id(c.Compra_Fecha)
+    INNER JOIN MAUV.BI_Ubicacion u ON u.Provincia = s.Sucursal_Provincia AND u.Localidad = s.Sucursal_Localidad
+    GROUP BY
+        c.Compra_Sucursal,
+        t.id,
+        u.id,
+        tm.id;
     
+    INSERT INTO MAUV.BI_Indicadores_Envios (
+        Cantidad,
+        Cantidad_En_Tiempo,
+        Suma_Costo_Total,
+        Tiempo_id,
+        Ubicacion_id
+    ) SELECT DISTINCT
+        COUNT (*) AS Cantidad,
+        SUM(CASE WHEN e.Envio_Fecha <= e.Envio_Fecha_Programada 
+                THEN 1
+                ELSE 0
+            END
+        ),
+        SUM(e.Envio_Total),
+        t.id,
+        u.id
+    FROM MAUV.Envio e
+    INNER JOIN MAUV.Factura f ON e.Envio_Factura = f.Factura_Numero
+    INNER JOIN MAUV.Sucursal s ON s.Sucursal_NroSucursal = f.Factura_Sucursal
+    INNER JOIN MAUV.BI_Tiempo t ON t.id = MAUV.obtener_tiempo_id(e.Envio_Fecha)
+    INNER JOIN MAUV.BI_Ubicacion u ON u.Provincia = s.Sucursal_Provincia AND u.Localidad = s.Sucursal_Localidad
+    GROUP BY t.id, u.id;
 END;
 GO
 
@@ -297,7 +365,20 @@ GO
 ------------------------------------------------------
 CREATE or ALTER PROCEDURE MAUV.BI_crear_vistas AS
 BEGIN
+    CREATE VIEW MAUV.BI_Vista_Ganancias_Mensuales AS
+    SELECT
+        t.Mes,
+        u.Provincia,
+        SUM(f.Suma_Subtotal) - SUM(c.Suma_Subtotal) AS Ganancia
+    FROM MAUV.BI_Indicadores_Facturacion f
+    JOIN MAUV.BI_Indicadores_Compras c
+    ON f.Sucursal_Nro = c.Sucursal_Nro AND f.Tiempo_id = c.Tiempo_id
+    JOIN MAUV.BI_Tiempo t ON f.Tiempo_id = t.id
+    -- ver si realmente hace falta
+    JOIN MAUV.BI_Ubicacion u ON f.Ubicacion_id = u.id
+    GROUP BY t.Mes, u.Provincia;
 
+        
 END;
 GO
 
