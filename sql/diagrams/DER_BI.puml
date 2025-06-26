@@ -3,15 +3,133 @@
 skinparam linetype ortho
 
 ' ENTITIES DECLARATION
+entity "Tiempo" as Tiempo {
+    *id : number <<PK>>
+    --
+    *Anio : number 
+    *Mes : number
+    *Cuatrimestre: number
+}
+
+entity "Ubicacion" as Ubi {
+    *id : number <<PK>>
+    --
+    *Provincia : char(255)
+    *Localidad : char(255)
+}
+
+entity "Rango_Etario_Cliente" as RangEt {
+    *id : number <<PK>>
+    --
+    *Rango : char(255)
+}
+
+entity "Turno_Ventas" as Turnven {
+    *id : number <<PK>>
+    --
+    *Rango : char(255)
+} 
+
+entity "Tipo_Material" as TipMat {
+    *id : number <<PK>>
+    --
+    *Tipo : char(255)
+}
+
+entity "Modelo_Sillon" as ModSi {
+    *id : number <<PK>>
+    --
+    *Modelo : char(255)
+}
+
+entity "Estado_Pedido" as EstPed {
+    *id : number <<PK>>
+    --
+    *Estado : char(255)
+}
+
+entity "Sucursal" as Suc {
+    *Sucursal_Nro : number <<PK>>
+}
 
 
+entity "Indicadores_Facturacion" as IndFact {
+    *Sucursal_Nro : number <<FK>>
+    *Ubicacion_id : number <<FK>>
+    *Tiempo_id : number <<FK>>
+    --
+    *Suma_Total : number
+    *Cantidad_Facturas: number
+}
 
+entity "Indicadores_Venta_Modelo" as IndVent {
+    *Ubicacion_id : number <<FK>>
+    *Tiempo_id : number <<FK>>
+    *Rango_Etario_id : number <<FK>>
+    --
+    *Modelo : char(255)
+    *Suma_Valor_Ventas : number
+    *Cantidad_Ventas : number
+}
 
+entity "Indicadores_Pedidos" as IndPed {
+    *Sucursal_Nro : number <<FK>>
+    *Turno_Ventas_id : number <<FK>>
+    *Tiempo_id : number <<FK>>
+    --
+    *Cantidad : number
+    *Cantidad_Entregado : number
+    *Cantidad_Cancelado : number
+    *Cantidad_Pendiente : number
+    *Suma_Tiempo_Registro_Factura: number
+}
+
+entity "Indicadores_Compras" as IndCom {
+    *Sucursal_Nro : number <<FK>>
+    *Ubicacion_id : number <<FK>>
+    *Tiempo_id : number <<FK>>
+    *Tipo_Material_id : number <<FK>>
+    --
+    *Suma_Subtotal : number
+    *Cantidad_Compras : number 
+}
+
+entity "Indicadores_Envios" as IndEnv {
+    *Ubicacion_id : number <<FK>>
+    *Tiempo_id : number <<FK>>
+    --
+    *Cantidad : number
+    *Cantidad_En_Tiempo : number
+    *Suma_Costo_Total : number
+}
 
 ' ENTITIES RELATIONSHIPS
+' Tiempo
+Tiempo ||--|{ IndFact
+Tiempo ||--|{ IndVent
+Tiempo ||--|{ IndPed
+Tiempo ||--|{ IndCom
+Tiempo ||--|{ IndEnv
 
+' Ubicacion
+Ubi ||--|{ IndFact
+Ubi ||--|{ IndVent
+Ubi ||--|{ IndCom
+Ubi ||--|{ IndEnv
 
+' Sucursal
+Suc ||--|{ IndFact
+Suc ||--|{ IndPed
+Suc ||--|{ IndCom
 
+' Rango Etario
+RangEt ||--|{ IndVent
+
+' Turno de Ventas
+Turnven ||--|{ IndPed
+
+' Tipo de Material
+TipMat ||--|{ IndCom
 
 
 @enduml
