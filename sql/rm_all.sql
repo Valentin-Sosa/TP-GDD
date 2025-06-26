@@ -44,6 +44,7 @@ DROP TABLE [MAUV].[Material]
 GO
 
 DROP PROCEDURE MAUV.crear_tablas;
+DROP PROCEDURE MAUV.crear_triggers;
 DROP PROCEDURE MAUV.migrar_materiales;
 DROP PROCEDURE MAUV.migrar_sillones;
 DROP PROCEDURE MAUV.migrar_sucursales_clientes_proveedores;
