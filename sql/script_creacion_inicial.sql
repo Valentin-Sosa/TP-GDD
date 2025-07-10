@@ -44,7 +44,7 @@ BEGIN
 
     -- Sillon
     CREATE TABLE MAUV.Sillon_Medida (
-        Sillon_Medida_Codigo bigint PRIMARY KEY NOT NULL,
+        Sillon_Medida_Codigo bigint PRIMARY KEY IDENTITY(1,1),
         Sillon_Medida_Alto decimal(18, 2),
         Sillon_Medida_Ancho decimal(18, 2),
         Sillon_Medida_Profundidad decimal(18, 2),
@@ -379,62 +379,24 @@ CREATE or ALTER PROCEDURE MAUV.migrar_sillones AS
 BEGIN
     -- Sillones
 
-    -- Necesitamos una tabla temporal ya que necesitamos generar "medida_codigo" para conectarla a la tabla sillon
-    -- Esto ocurre porque no tenemos el dato en la tabla maestra
-    CREATE TABLE MAUV.sillon_temporal (
-        sillon_codigo bigint,
-        modelo_codigo bigint,
-        modelo nvarchar(255),
-        modelo_descripcion nvarchar(255),
-        modelo_precio decimal(18,2),
-        medida_codigo bigint IDENTITY(1,1),
-        medida_ancho decimal(18,2),
-        medida_alto decimal(18,2),
-        medida_profundidad decimal(18,2),
-        medida_precio decimal(18,2),
+    -- Insertamos las medidas
+    INSERT INTO MAUV.Sillon_Medida (
+        Sillon_Medida_Alto,
+        Sillon_Medida_Ancho,
+        Sillon_Medida_Profundidad,
+        Sillon_Medida_Precio
     )
-
-    INSERT INTO MAUV.sillon_temporal (
-        sillon_codigo,
-        modelo_codigo,
-        modelo,
-        modelo_descripcion,
-        modelo_precio,
-        medida_ancho,
-        medida_alto,
-        medida_profundidad,
-        medida_precio
-    ) 
-    SELECT DISTINCT 
-        Sillon_Codigo, 
-        Sillon_Modelo_Codigo, 
-        Sillon_Modelo, 
-        Sillon_Modelo_Descripcion, 
-        Sillon_Modelo_Precio, 
+    SELECT DISTINCT
         Sillon_Medida_Alto, 
         Sillon_Medida_Ancho,
         Sillon_Medida_Profundidad,
         Sillon_Medida_Precio
-    FROM gd_esquema.Maestra;
-    
-    INSERT INTO MAUV.Sillon_Medida (
-        Sillon_Medida_Codigo,
-        Sillon_Medida_Alto,
-        Sillon_Medida_Ancho,
-        Sillon_Medida_Precio,
-        Sillon_Medida_Profundidad
-    )
-    SELECT
-        medida_codigo,
-        medida_alto,
-        medida_ancho,
-        medida_precio,
-        medida_profundidad
     FROM
-        MAUV.sillon_temporal
+        gd_esquema.Maestra
     WHERE
-        medida_codigo IS NOT NULL AND medida_alto IS NOT NULL AND medida_ancho IS NOT NULL AND medida_profundidad IS NOT NULL;
-
+        Sillon_Medida_Alto IS NOT NULL AND Sillon_Medida_Ancho IS NOT NULL AND Sillon_Medida_Profundidad IS NOT NULL AND Sillon_Medida_Precio IS NOT NULL;
+    
+    -- Insertamos los modelos
     INSERT INTO MAUV.Sillon_Modelo (
         Sillon_Modelo_Codigo,
         Sillon_Modelo,
@@ -442,26 +404,31 @@ BEGIN
         Sillon_Modelo_Precio
     )
     SELECT DISTINCT
-        modelo_codigo,
-        modelo,
-        modelo_descripcion,
-        modelo_precio
+        Sillon_Modelo_Codigo, 
+        Sillon_Modelo, 
+        Sillon_Modelo_Descripcion, 
+        Sillon_Modelo_Precio
     FROM
-        MAUV.sillon_temporal
+        gd_esquema.Maestra
     WHERE
-        modelo_codigo IS NOT NULL;
-
+        Sillon_Modelo_Codigo IS NOT NULL;
+    
     INSERT INTO MAUV.Sillon (
         Sillon_Codigo,
         Sillon_Modelo,
         Sillon_Medida
     )
-    SELECT
-        sillon_codigo,
-        modelo_codigo,   
-        medida_codigo
+    SELECT DISTINCT
+        Sillon_Codigo,
+        smodelo.Sillon_Modelo_Codigo,
+        smed.Sillon_Medida_Codigo
     FROM
-        MAUV.sillon_temporal
+        gd_esquema.Maestra m
+    JOIN MAUV.Sillon_Modelo smodelo ON m.Sillon_Modelo_Codigo = smodelo.Sillon_Modelo_Codigo
+    JOIN MAUV.Sillon_Medida smed ON m.Sillon_Medida_Alto = smed.Sillon_Medida_Alto 
+    AND m.Sillon_Medida_Ancho = smed.Sillon_Medida_Ancho
+    AND m.Sillon_Medida_Profundidad = smed.Sillon_Medida_Profundidad
+    AND m.Sillon_Medida_Precio = smed.Sillon_Medida_Precio
     WHERE
         sillon_codigo IS NOT NULL;
 
@@ -476,8 +443,6 @@ BEGIN
         gd_esquema.Maestra
     WHERE
         Material_Nombre IS NOT NULL AND Sillon_Codigo IS NOT NULL;
-
-    DROP TABLE MAUV.sillon_temporal
 END;
 GO
 
