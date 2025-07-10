@@ -179,7 +179,7 @@ BEGIN
 
     -- 3. Creacion detalles Pedido, Factura, Compra
     CREATE TABLE MAUV.Detalle_Pedido (
-        Detalle_Pedido_Codigo bigint PRIMARY KEY NOT NULL,
+        Detalle_Pedido_Codigo bigint PRIMARY KEY IDENTITY(1,1),
         Detalle_Pedido_Numero decimal(18,0) FOREIGN KEY REFERENCES MAUV.Pedido(Pedido_Numero) NOT NULL,
         Detalle_Pedido_Sillon bigint FOREIGN KEY REFERENCES MAUV.Sillon(Sillon_Codigo) NOT NULL,
         Detalle_Pedido_Cantidad bigint,
@@ -627,66 +627,26 @@ BEGIN
     -- Como hicimos con sillones, necesitamos crear otra tabla temporal para almacenar el Detalle_Pedido pk
     --  y poder pasarla a Detalle_Factura
 
-    CREATE TABLE MAUV.detalles_temp (
-        detalle_pedido_codigo bigint IDENTITY(1,1),
-        detalle_pedido_numero decimal(18,0),
-        detalle_pedido_sillon bigint,
-        detalle_pedido_cantidad bigint,
-        detalle_pedido_precio decimal(18,2),
-        detalle_pedido_subtotal decimal(18,2),
-        detalle_factura_numero bigint,
-        detalle_factura_precio decimal(18,2),
-        detalle_factura_cantidad decimal(18,0),
-        detalle_factura_subtotal decimal(18,2)
-    )
 
     -- acá tenemos que unir las tablas porque cuando tenemos la información de sillon, la de factura no lo está.
-
-    INSERT INTO MAUV.detalles_temp (
-        detalle_pedido_numero,
-        detalle_pedido_sillon,
-        detalle_pedido_cantidad,
-        detalle_pedido_precio,
-        detalle_pedido_subtotal,
-        detalle_factura_numero,
-        detalle_factura_precio,
-        detalle_factura_cantidad,
-        detalle_factura_subtotal
-    )
-    SELECT DISTINCT
-        p.Pedido_Numero,
-        p.Sillon_Codigo,
-        p.Detalle_Pedido_Cantidad,
-        p.Detalle_Pedido_Precio,
-        p.Detalle_Pedido_Subtotal,
-        f.Factura_Numero,
-        f.Detalle_Factura_Precio,
-        f.Detalle_Factura_Cantidad,
-        f.Detalle_Factura_Subtotal
-    FROM gd_esquema.Maestra p
-    JOIN gd_esquema.Maestra f ON p.Pedido_Numero = f.Pedido_Numero
-    WHERE
-        p.Pedido_Numero IS NOT NULL AND
-        p.Sillon_Codigo IS NOT NULL AND
-        f.Factura_Numero IS NOT NULL;
-
     INSERT INTO MAUV.Detalle_Pedido (
-        Detalle_Pedido_Codigo,
         Detalle_Pedido_Numero,
         Detalle_Pedido_Sillon,
         Detalle_Pedido_Cantidad,
         Detalle_Pedido_Precio,
         Detalle_Pedido_Subtotal
     )
-    SELECT
-        detalle_pedido_codigo,
-        detalle_pedido_numero,
-        detalle_pedido_sillon,
-        detalle_pedido_cantidad,
-        detalle_pedido_precio,
-        detalle_pedido_subtotal
+    SELECT DISTINCT
+        Pedido_Numero,
+        Sillon_Codigo,
+        Detalle_Pedido_Cantidad,
+        Detalle_Pedido_Precio,
+        Detalle_Pedido_Subtotal
     FROM 
-        MAUV.detalles_temp
+        gd_esquema.Maestra
+    WHERE
+        Pedido_Numero IS NOT NULL AND
+        Sillon_Codigo IS NOT NULL
 
     INSERT INTO MAUV.Detalle_Factura (
         Detalle_Factura_Numero,
@@ -695,16 +655,20 @@ BEGIN
         Detalle_Factura_Cantidad,
         Detalle_Factura_Subtotal
     )
-    SELECT
-        detalle_factura_numero,
-        detalle_pedido_codigo,
-        detalle_factura_precio,
-        detalle_factura_cantidad,
-        detalle_factura_subtotal
+    SELECT DISTINCT
+        m.Factura_Numero,
+        dp.Detalle_Pedido_Codigo,
+        m.Detalle_Factura_Precio,
+        m.Detalle_Factura_Cantidad,
+        m.Detalle_Factura_Subtotal 
     FROM 
-        MAUV.detalles_temp
-     WHERE
-        detalle_factura_numero IS NOT NULL;
+        gd_esquema.Maestra m
+    JOIN MAUV.Detalle_Pedido dp ON m.Pedido_Numero = dp.Detalle_Pedido_Numero 
+    AND dp.Detalle_Pedido_Cantidad = m.Detalle_Pedido_Cantidad 
+    AND dp.Detalle_Pedido_Precio = m.Detalle_Pedido_Precio
+    AND dp.Detalle_Pedido_Subtotal = m.Detalle_Pedido_Subtotal
+    WHERE
+       m.Factura_Numero IS NOT NULL AND m.Pedido_Numero IS NOT NULL;
 
     INSERT INTO MAUV.Detalle_Compra (
         Detalle_Compra_Numero,
@@ -723,8 +687,6 @@ BEGIN
         gd_esquema.Maestra
     WHERE
         Compra_Numero IS NOT NULL AND Material_Nombre IS NOT NULL;
-    
-    DROP TABLE MAUV.detalles_temp;
 END;
 GO
 
