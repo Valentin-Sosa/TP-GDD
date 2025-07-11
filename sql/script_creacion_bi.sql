@@ -72,6 +72,7 @@ BEGIN
         Modelo nvarchar(255),
         Suma_Valor_Ventas decimal(18,2),
         Cantidad_Ventas decimal(18,0),
+        Sucursal_Nro bigint FOREIGN KEY REFERENCES MAUV.BI_Sucursal(Sucursal_Nro),
         Tiempo_id decimal(18,0) FOREIGN KEY REFERENCES MAUV.BI_Tiempo(id),
         Ubicacion_id decimal(18,0) FOREIGN KEY REFERENCES MAUV.BI_Ubicacion(id),
         Rango_Etario_id decimal(18,0) FOREIGN KEY REFERENCES MAUV.BI_Rango_Etario_Cliente(id),
@@ -92,7 +93,7 @@ BEGIN
 
     CREATE TABLE MAUV.BI_Indicadores_Compras (
         Suma_Subtotal decimal(18,2),
-        Cantidad_Compras decimal(18,0),
+        Cantidad_Compras decimal(18,2),
         Sucursal_Nro bigint FOREIGN KEY REFERENCES MAUV.BI_Sucursal(Sucursal_Nro),
         Tiempo_id decimal(18,0) FOREIGN KEY REFERENCES MAUV.BI_Tiempo(id),
         Ubicacion_id decimal(18,0) FOREIGN KEY REFERENCES MAUV.BI_Ubicacion(id),
@@ -116,7 +117,7 @@ GO
 ------------------------------------------------------
 CREATE or ALTER PROCEDURE MAUV.BI_crear_funciones_utilitarias AS
 BEGIN
-    EXEC('CREATE FUNCTION MAUV.obtener_rango_etario_id(@date DATE) RETURNS INT AS
+    EXEC('CREATE FUNCTION MAUV.obtener_rango_etario_id(@date DATETIME) RETURNS INT AS
     BEGIN
         DECLARE @edad INT;
 
@@ -124,9 +125,9 @@ BEGIN
 
         DECLARE @id INT;
         SET @id = CASE WHEN @edad < 25 THEN 1
-                    WHEN @edad BETWEEN 25 AND 35 THEN 2 
-                    WHEN @edad > 35 AND @edad <= 50 THEN 3
-                    WHEN @edad > 50 THEN 4
+                    WHEN @edad >= 25 AND @edad < 35 THEN 2 
+                    WHEN @edad >= 35 AND @edad < 50 THEN 3
+                    WHEN @edad >= 50 THEN 4
         END;
 
         RETURN @id
@@ -146,18 +147,11 @@ BEGIN
         RETURN @id
     END')
 
-    EXEC('CREATE FUNCTION MAUV.obtener_numero_cuatrimestre(@date DATE) RETURNS INT AS
+    EXEC('CREATE FUNCTION MAUV.obtener_numero_cuatrimestre(@date DATETIME) RETURNS INT AS
     BEGIN
-        DECLARE @mes INTEGER;
-
-        SET @mes = MONTH(@date);
-
         DECLARE @cuatri INT;
-        SET @cuatri = CASE WHEN @mes BETWEEN 1 AND 4 THEN 1
-                    WHEN @mes BETWEEN 5 AND 8 THEN 2
-                    WHEN @mes BETWEEN 9 AND 12 THEN 3
-        END;
-                            
+        SET @cuatri = DATEPART(QUARTER, @date);
+
         RETURN @cuatri;
     END')
 
@@ -242,29 +236,31 @@ BEGIN
         Ubicacion_id
     ) (
         SELECT DISTINCT 
-            SUM(f.Factura_Total) AS Suma_Subtotal,
+            SUM(ISNULL(f.Factura_Total, 0)),
             COUNT(*) AS Cantidad_Facturas,
-            s.Sucursal_NroSucursal,
+            f.Factura_Sucursal,
             t.id,
             u.id
         FROM MAUV.Factura f
         INNER JOIN MAUV.Sucursal s ON s.Sucursal_NroSucursal = f.Factura_Sucursal 
         INNER JOIN MAUV.BI_Tiempo t  ON t.id = MAUV.obtener_tiempo_id(f.Factura_Fecha)
         INNER JOIN MAUV.BI_Ubicacion u ON u.Provincia = s.Sucursal_Provincia AND u.Localidad = s.Sucursal_Localidad
-		GROUP BY s.Sucursal_NroSucursal, t.id, u.id
+		GROUP BY f.Factura_Sucursal, t.id, u.id
     );
 
     INSERT INTO MAUV.BI_Indicadores_Ventas_Modelo (
         Modelo,
         Cantidad_Ventas,
         Suma_Valor_Ventas,
+        Sucursal_Nro,
         Tiempo_id,
         Ubicacion_id,
         Rango_Etario_id
     ) SELECT DISTINCT
         sm.Sillon_Modelo, 
         COUNT(*) AS Cantidad_Ventas, 
-        SUM(Pedido_Total) AS Suma_Valor_Ventas, 
+        SUM(ISNULL(dp.Detalle_Pedido_Subtotal, 0)) AS Suma_Valor_Ventas,
+        su.Sucursal_NroSucursal,
         t.id, 
         u.id, 
         r.id
@@ -277,8 +273,7 @@ BEGIN
     INNER JOIN MAUV.BI_Tiempo t  ON t.id = MAUV.obtener_tiempo_id(p.Pedido_Fecha)
     INNER JOIN MAUV.BI_Ubicacion u ON u.Provincia = su.Sucursal_Provincia AND u.Localidad = su.Sucursal_Localidad
     INNER JOIN MAUV.BI_Rango_Etario_Cliente r ON r.id = MAUV.obtener_rango_etario_id(c.Cliente_Fecha_Nacimiento)
-    GROUP BY sm.Sillon_Modelo, r.id, t.id, u.id;
-
+    GROUP BY su.Sucursal_NroSucursal, sm.Sillon_Modelo, r.id, t.id, u.id;
 
     INSERT INTO MAUV.BI_Indicadores_Pedidos (
         Cantidad,
@@ -323,8 +318,8 @@ BEGIN
         Tiempo_id,
         Ubicacion_id,
         Tipo_Material_id
-    ) SELECT
-        SUM(c.Compra_Total) AS Suma_Subtotal,
+    ) SELECT DISTINCT
+        SUM(ISNULL(c.Compra_Total, 0)) AS Suma_Subtotal,
         COUNT(*) AS Cantidad_Compras,
         c.Compra_Sucursal,
         t.id AS Tiempo_id,
@@ -405,41 +400,41 @@ SELECT
     t.Anio,
     t.Cuatrimestre,
     u.Provincia,
-    SUM(f.Suma_Subtotal) / SUM(f.Cantidad_Facturas) AS Promedio_Factura
+    SUM(f.Suma_Subtotal) / NULLIF(SUM(f.Cantidad_Facturas), 0) AS Factura_Promedio_Mensual
 FROM MAUV.BI_Indicadores_Facturacion f
 INNER JOIN MAUV.BI_Tiempo t ON f.Tiempo_id = t.id
 INNER JOIN MAUV.BI_Ubicacion u ON f.Ubicacion_id = u.id
+INNER JOIN MAUV.BI_Sucursal s ON s.Sucursal_Nro = f.Sucursal_Nro
 GROUP BY u.Provincia, t.Anio, t.Cuatrimestre
 GO
 
-CREATE VIEW MAUV.BI_Vista_Rendimiento_Modelos AS
-SELECT
-    t.Anio,
-    t.Cuatrimestre,
-    u.Provincia,
-    u.Localidad,
-    r.Rango AS Rango_Etario,
-    vm.Modelo
-FROM MAUV.BI_Indicadores_Ventas_Modelo vm
-JOIN MAUV.BI_Tiempo t ON vm.Tiempo_id = t.id
-JOIN MAUV.BI_Ubicacion u ON vm.Ubicacion_id = u.id
-JOIN MAUV.BI_Rango_Etario_Cliente r ON vm.Rango_Etario_id = r.id
-JOIN (
+CREATE OR ALTER VIEW MAUV.BI_Vista_Rendimiento_Modelos AS
+WITH VentasRankeadas AS (
     SELECT
-        Tiempo_Id,
-        Ubicacion_id,
-        Rango_Etario_id,
-        Modelo,
+        t.Anio,
+        t.Cuatrimestre,
+        u.Localidad,
+        r.Rango AS Rango_Etario,
+        vm.Modelo,
+        SUM(vm.Cantidad_Ventas) AS Total_Cant_Ventas,
         ROW_NUMBER() OVER (
-            PARTITION BY Tiempo_id, Ubicacion_id, Rango_Etario_id
-            ORDER BY Cantidad_Ventas DESC
-        ) AS Posicion
-    FROM MAUV.BI_Indicadores_Ventas_Modelo
-) top3 ON vm.Tiempo_id = top3.Tiempo_id
-        AND vm.Ubicacion_id = top3.Ubicacion_id
-        AND vm.Rango_Etario_id = top3.Rango_Etario_id
-        AND vm.Modelo = top3.Modelo
-WHERE top3.Posicion <= 3;
+            PARTITION BY t.Anio, t.Cuatrimestre, u.Localidad, r.Rango
+            ORDER BY SUM(vm.Cantidad_Ventas) DESC
+        ) AS Pos_Ranking
+    FROM MAUV.BI_Indicadores_Ventas_Modelo vm
+    JOIN MAUV.BI_Tiempo t ON vm.Tiempo_id = t.id
+    JOIN MAUV.BI_Ubicacion u ON vm.Ubicacion_id = u.id
+    JOIN MAUV.BI_Rango_Etario_Cliente r ON vm.Rango_Etario_id = r.id
+    GROUP BY
+        t.Anio,
+        t.Cuatrimestre,
+        u.Localidad,
+        r.Rango,
+        vm.Modelo
+)
+SELECT *
+FROM VentasRankeadas
+WHERE Pos_Ranking <= 3;
 GO
 
 CREATE VIEW MAUV.BI_Vista_Volumen_Pedidos AS
@@ -458,37 +453,41 @@ GO
 
 CREATE VIEW MAUV.BI_Vista_Conversion_Pedidos AS
 SELECT
+t.anio,
+t.Cuatrimestre,
+s.Sucursal_Nro,
 (SUM(p.Cantidad_Entregado) * 100.0) / NULLIF(SUM(p.Cantidad), 0) AS Porcentaje_Entregado,
 (SUM(p.Cantidad_Cancelado) * 100.0) / NULLIF(SUM(p.Cantidad), 0) AS Porcentaje_Cancelado,
-(SUM(p.Cantidad_Pendiente) * 100.0) / NULLIF(SUM(p.Cantidad), 0) AS Porcentaje_Pendiente,
-t.Cuatrimestre,
-s.Sucursal_Nro
+(SUM(p.Cantidad_Pendiente) * 100.0) / NULLIF(SUM(p.Cantidad), 0) AS Porcentaje_Pendiente
 FROM MAUV.BI_Indicadores_Pedidos p
 INNER JOIN MAUV.BI_Tiempo t ON Tiempo_Id = t.id
 INNER JOIN MAUV.BI_Sucursal s ON  p.Sucursal_Nro = s.Sucursal_Nro
-GROUP BY t.Cuatrimestre, s.Sucursal_Nro
+GROUP BY t.anio, t.Cuatrimestre, s.Sucursal_Nro
 GO
 
 CREATE VIEW MAUV.BI_Vista_Tiempo_Promedio_Fabricacion AS
 SELECT
-p.Sucursal_Nro,
+t.anio,
 t.Cuatrimestre,
-SUM(p.Suma_Tiempo_Registro_Factura) / SUM(p.Cantidad) AS Tiempo_Promedio_Fabricacion_Dias
+p.Sucursal_Nro,
+CONCAT(SUM(p.Suma_Tiempo_Registro_Factura) / SUM(p.Cantidad), ' Días') AS tiempo_promedio_fabricacion
 FROM MAUV.BI_Indicadores_Pedidos p
 INNER JOIN MAUV.BI_Tiempo t ON t.id = p.Tiempo_id
-GROUP BY p.Sucursal_Nro, t.Cuatrimestre
+GROUP BY t.anio, t.Cuatrimestre, p.Sucursal_Nro
 GO
 
 CREATE VIEW MAUV.BI_Vista_Promedio_Compras_Mensual AS
 SELECT
+    t.Anio,
     t.Mes,
+    c.Sucursal_Nro,
     SUM(c.Suma_SubTotal) / SUM(c.Cantidad_Compras) AS Promedio_Compras_Mes
 FROM MAUV.BI_Indicadores_Compras c
 JOIN MAUV.BI_Tiempo t ON t.id = c.Tiempo_id
 GROUP BY
+    t.anio,
     t.Mes,
-    c.Suma_SubTotal,
-    c.Cantidad_Compras;
+    Sucursal_Nro
 GO
 
 CREATE VIEW MAUV.BI_Vista_Compras_Tipo_Material AS
