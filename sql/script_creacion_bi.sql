@@ -449,6 +449,7 @@ INNER JOIN MAUV.BI_Tiempo t ON p.Tiempo_Id = t.id
 INNER JOIN MAUV.BI_Sucursal s ON  p.Sucursal_Nro = s.Sucursal_Nro
 INNER JOIN MAUV.BI_Turno_Ventas tv ON p.Turno_Ventas_id = tv.id
 GROUP BY s.Sucursal_Nro, t.Mes, t.Anio,  p.Turno_Ventas_id
+GO
 
 CREATE VIEW MAUV.BI_Vista_Conversion_Pedidos AS
 SELECT
